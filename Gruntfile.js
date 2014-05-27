@@ -6,15 +6,12 @@ module.exports = function (grunt) {
     var configure = function(source) { extend(config, source); };
 
     // Tasks
-    grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-clean');
-    grunt.loadNpmTasks('grunt-shell');
-    grunt.loadNpmTasks('grunt-ts');
+    require('matchdep').filterAll('grunt-*').forEach(function (x) { grunt.loadNpmTasks(x); });
 
     // Common
     configure({
         clean: {
-            src: ['dist/**/*.js.map', 'dist/**/*.js', 'dist/**/*.d.ts']
+            src: ['dist/*']
         }
     });
 
@@ -22,10 +19,10 @@ module.exports = function (grunt) {
     configure({
         ts: {
             lib: {
-                src: ['src/core/**/*.ts'],
+                src: ['src/iwc/**/*.ts'],
                 outDir: 'dist/',
                 options: {
-                    module: 'commonjs',
+                    module: 'amd',
                     target: 'es3',
                     sourceMaps: true,
                     declaration: true,
@@ -35,71 +32,8 @@ module.exports = function (grunt) {
         },
         watch: {
             lib: {
-                files: ['src/core/**/*.ts'],
+                files: ['src/iwc/**/*.ts'],
                 tasks: ['ts:lib'],
-                options: {
-                    spawn: false,
-                }
-            }
-        }
-    });
-
-    // XQ
-    configure({
-        ts: {
-            xq: {
-                src: ['src/xq/**/*.ts'],
-                outDir: 'dist/xq',
-                options: {
-                    module: 'commonjs',
-                    target: 'es3',
-                    sourceMaps: true,
-                    declaration: true,
-                    removeComments: false
-                }
-            }
-        },
-        watch: {
-            xq: {
-                files: ['src/xq/**/*.ts'],
-                tasks: ['ts:xq'],
-                options: {
-                    spawn: false,
-                }
-            }
-        }
-    });
-
-    // Tests
-    configure({
-        ts: {
-            tests: {
-                src: ['src/tests/**/*.ts'],
-                out: 'dist/_tests.js',
-                options: {
-                    target: 'es3',
-                    sourceMaps: true,
-                    declaration: true,
-                    removeComments: false
-                }
-            }
-        },
-        shell: {
-            tests: {
-                options: {
-                    stdout: true,
-                    stderr: true,
-                    execOptions: {
-                        cwd: 'dist'
-                    }
-                },
-                command: 'node _tests.js'
-            }
-        },
-        watch: {
-            tests: {
-                files: ['src/**/*.ts'],
-                tasks: ['_tests'],
                 options: {
                     spawn: false,
                 }
@@ -111,10 +45,8 @@ module.exports = function (grunt) {
     grunt.initConfig(config);
 
     // Builder tasks
-    grunt.registerTask('_tests', ['_lib', 'ts:tests', 'shell:tests']);
-    grunt.registerTask('_lib', ['ts:xq', 'ts:lib']);
+    grunt.registerTask('_lib', ['ts:lib']);
 
     // External tasks
     grunt.registerTask('default', ['clean', '_lib']);
-    grunt.registerTask('test', ['clean', '_tests']);
 }
