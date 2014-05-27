@@ -3,3 +3,5 @@ dist
 .baseDir*
 *.js.map
 *.d.ts
+.tscache
+.idea
