@@ -33,13 +33,20 @@ module.exports = function (grunt) {
         ts: {
             lib: {
                 src: ['src/iwc/**/*.ts'],
-                outDir: 'dist/',
+                outDir: 'dist/iwc/',
                 options: {
-                    module: 'amd',
+                    module: 'commonjs',
                     target: 'es3',
                     sourceMaps: true,
                     declaration: true,
                     removeComments: false
+                }
+            }
+        },
+        browserify: {
+            lib: {
+                files: {
+                    'dist/iwc.js': ['dist/iwc/**/*.js']
                 }
             }
         },
@@ -72,7 +79,7 @@ module.exports = function (grunt) {
     grunt.initConfig(config);
 
     // Builder tasks
-    grunt.registerTask('_lib', ['ts:lib']);
+    grunt.registerTask('_lib', ['ts:lib', 'browserify:lib']);
     grunt.registerTask('_demo', ['_lib', 'requirejs']);
 
     // External tasks

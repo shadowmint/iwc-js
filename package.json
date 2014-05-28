@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "connect": "^2.17.1",
+    "grunt-browserify": "^2.1.0",
     "grunt-requirejs": "^0.4.2"
   }
 }
