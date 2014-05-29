@@ -1,5 +1,7 @@
 import cmp = require('./component');
-import async = require('./async');
+import async = require('./utils/async');
+import walker = require('./utils/walker');
+import clone = require('./utils/cloner');
 
 /* Set of loaded components */
 var _components:cmp.Component[] = [];
@@ -9,6 +11,7 @@ var _loading:any = null;
 
 /* Validate that a component name is valid */
 export function validate_name(name:string):any {
+    console.log(name);
     if (name.indexOf('-') == -1) {
         throw Error('Components must be named in the NS-NAME format');
     }
@@ -41,8 +44,8 @@ export function register_component(def:cmp.Component):void {
 }
 
 /* Generate a unique updater for a component definition */
-function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp.ComponentChange):void} {
-    return (e:HTMLElement, action:cmp.ComponentChange) => {
+function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp.callbacks.Change):void} {
+    return (e:HTMLElement, action:cmp.callbacks.Change) => {
         try {
             var instance = def.instances[e];
         }
@@ -89,16 +92,32 @@ function load_components():void {
 function load_component(c:cmp.Component):void {
     var targets = c.targets();
     for (var i = 0; i < targets.length; ++i) {
-        // Generate a unique copy of the model
-        // Generate a unique copy of the view
+        var target = targets[i]
+        console.log('Processing a component target: ' + target);
 
         // Parse DOM node for component and generate template state
+        var state = new walker.Walk(target).walk().attribs;
+        console.log(state);
+
+        // Generate a unique copy of the model & view
+        console.log(c);
+        var model = clone.clone(c.model);
+        var view = clone.clone(c.view, state);
 
         // Render template & replace DOM content
+        var raw = c.template({
+            state: state,
+            model: model,
+            view: view
+        });
 
         // Populate view & invoke instance handler
+        var instance = new cmp.Instance(target, c, model, view);
+        instance.root.innerHTML = raw;
+        c.instance(model, view, target);
+
+        console.log(instance)
 
         // Inject stylesheet
-        console.log('Processing a component target: ' + targets[i]);
     }
 }

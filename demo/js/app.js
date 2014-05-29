@@ -5,6 +5,11 @@ require.config({
         handlebars: 'lib/handlebars/handlebars.amd',
         jquery: 'lib/jquery/dist/jquery',
         hello_button: 'components/hello-button'
+    },
+    shim: {
+        iwc: {
+            exports: 'iwc'
+        }
     }
 });
 

@@ -45,6 +45,8 @@ module.exports = function (grunt) {
         },
         browserify: {
             lib: {
+                options: {
+                },
                 files: {
                     'dist/iwc.js': ['dist/iwc/**/*.js']
                 }
@@ -53,7 +55,7 @@ module.exports = function (grunt) {
         watch: {
             lib: {
                 files: ['src/iwc/**/*.ts'],
-                tasks: ['ts:lib'],
+                tasks: ['_lib'],
                 options: {
                     spawn: false,
                 }
@@ -63,16 +65,6 @@ module.exports = function (grunt) {
 
     // Demo
     configure({
-        requirejs: {
-            compile: {
-                options: {
-                    baseUrl: "demo/js",
-                    mainConfigFile: "demo/js/app.js",
-                    name: "app",
-                    out: "demo/js/app.raw.js"
-                }
-            }
-        }
     })
 
     // Load combined config
@@ -80,7 +72,7 @@ module.exports = function (grunt) {
 
     // Builder tasks
     grunt.registerTask('_lib', ['ts:lib', 'browserify:lib']);
-    grunt.registerTask('_demo', ['_lib', 'requirejs']);
+    grunt.registerTask('_demo', ['_lib']);
 
     // External tasks
     grunt.registerTask('default', ['clean', '_lib']);
