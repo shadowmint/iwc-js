@@ -40,7 +40,6 @@ export class Walk {
         var rtn:any[] = [];
         if (node.attributes) {
             var a = [].filter.call(node.attributes, function(at) { return /^data-/.test(at.name); });
-            console.log(a);
             for (var i = 0; i < a.length; ++i) {
                 var name = a[i].name;
                 var value = a[i].value;

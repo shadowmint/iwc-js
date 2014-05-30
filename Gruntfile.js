@@ -45,10 +45,21 @@ module.exports = function (grunt) {
         },
         browserify: {
             lib: {
-                options: {
-                },
                 files: {
                     'dist/iwc.js': ['dist/iwc/**/*.js']
+                }
+            }
+        },
+
+    });
+
+    // Dev
+    configure({
+        connect: {
+            lib: {
+                options: {
+                    port: 3007,
+                    base: '.'
                 }
             }
         },
@@ -63,17 +74,14 @@ module.exports = function (grunt) {
         }
     });
 
-    // Demo
-    configure({
-    })
-
     // Load combined config
     grunt.initConfig(config);
 
     // Builder tasks
     grunt.registerTask('_lib', ['ts:lib', 'browserify:lib']);
-    grunt.registerTask('_demo', ['_lib']);
+    grunt.registerTask('_dev', ['connect', 'watch']);
 
     // External tasks
     grunt.registerTask('default', ['clean', '_lib']);
+    grunt.registerTask('dev', ['default', '_dev']);
 }

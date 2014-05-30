@@ -1,16 +1,68 @@
 <html>
 <head>
     <title>IWC Demo</title>
+    <style>
+        section {
+            padding: 10px;
+            margin: 10px;
+        }
+        #action {
+            float: right;
+            font-family: sans-serif;
+            font-size: 0.9em;
+            margin-top: -40px;
+        }
+        .component--hello-button { padding: 10px; border-radius: 5px; background: #efefef; font-family: sans-serif; border: 1px solid #9f9f9f; text-transform: uppercase; } .component--hello-button .clicks { float: right; font-size: 0.8em; } .component--hello-button button { width: 500px; height: 50px; line-height: 50px; font-size: 1.2em; font-weight: bold; }
+        .component--hello-label > div { padding: 10px 10px 5px 3px; font-family: serif; text-transform: capitalize; font-size: 1.4em; } .component--hello-label > div { border-bottom: 2px solid #efefef; }
+    </style>
 </head>
 <body>
-    <div class="component--hello-thing">
-        <span data-header="Header here"></span>
-        data
-        <div>
-            <span data-gallery="g1"></span>
-            <span data-gallery="g2"></span>
+    <!-- Basic label component -->
+    <section>
+        <div class="component--hello-label" data-value="Components demo"></div>
+    </section>
+
+    <!-- Basic button component -->
+    <section>
+        <div class="component--hello-button">
+            <span data-header="This label comes from the markup"></span>
         </div>
-    </div>
+    </section>
+
+    <!-- Component javascript interaction 1 -->
+    <section>
+        <div id="test2" class="component--hello-button" data-loaded="on_loaded()">
+            <meta data-header="Click here for alert"/>
+        </div>
+        <script>
+            function on_loaded() {
+                console.log("Loaded again");
+                components.hello.button(document.getElementById('test2'), function (r) {
+                    r.model.clicks.push(function () {
+                        alert('Custom event handler invoked');
+                    })
+                });
+            }
+        </script>
+    </section>
+
+    <!-- Component javascript interaction 2 -->
+    <section>
+        <div id="blah" class="component--hello-label" data-value="This label can be altered using javascript"></div>
+        <a href="#" id="action">Change label</a>
+        <script>
+            var action = document.getElementById('action');
+            action.onclick = function () {
+                var query = components.hello.label;
+                var e = document.getElementById('blah');
+                query(e, function (r) {
+                    r.model.value = "click was clicked";
+                });
+                return false;
+            }
+        </script>
+    </section>
+
     <script data-main="js/app" src="js/lib/requirejs/require.js"></script>
 </body>
 </hhtml>

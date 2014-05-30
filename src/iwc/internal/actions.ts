@@ -2,6 +2,7 @@ import cmp = require('./component');
 import async = require('./utils/async');
 import walker = require('./utils/walker');
 import clone = require('./utils/cloner');
+import styles = require('./utils/stylesheet');
 
 /* Set of loaded components */
 var _components:cmp.Component[] = [];
@@ -48,12 +49,16 @@ function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp
     return (e:HTMLElement, action:cmp.callbacks.Change) => {
         try {
             var instance = def.instances[e];
+            if (!instance) {
+                throw new Error('Unable to match component for element');
+            }
         }
         catch (e) {
             throw new Error('Unable to match component for element');
         }
         try {
-            action(instance.model, instance.view, instance.root);
+            console.log(instance);
+            action(new cmp.Ref(instance));
         }
         catch (e) {
             var error = new Error('Unable to update component: ' + e.toString());
@@ -77,47 +82,49 @@ function load_components():void {
     if (_loading != null) {
         clearTimeout(_loading);
     }
-    setTimeout(() => {
+    _loading = setTimeout(() => {
         _loading = null;
         for (var i = 0; i < _components.length; ++i) {
-            var component = _components[i];
-            if (!component.loaded) {
-                async.async(() => { load_component(component); });
-            }
+            load_component(_components[i]);
         }
     }, 100);
 }
 
 /* Load all instances of a single component */
 function load_component(c:cmp.Component):void {
-    var targets = c.targets();
-    for (var i = 0; i < targets.length; ++i) {
-        var target = targets[i]
-        console.log('Processing a component target: ' + target);
+    if (!c.loaded) {
+        async.async(() => {
 
-        // Parse DOM node for component and generate template state
-        var state = new walker.Walk(target).walk().attribs;
-        console.log(state);
+            // Inject stylesheet
+            console.log("Creating SS: " + c.styles);
+            styles.appendStyleSheet(c.styles, (msg:any) => {
+                console.log('Callback: ' + msg);
+            });
 
-        // Generate a unique copy of the model & view
-        console.log(c);
-        var model = clone.clone(c.model);
-        var view = clone.clone(c.view, state);
+            // Load components
+            var targets = c.targets();
+            for (var i = 0; i < targets.length; ++i) {
+                var target = targets[i]
 
-        // Render template & replace DOM content
-        var raw = c.template({
-            state: state,
-            model: model,
-            view: view
+                // Parse DOM node for component and generate template state
+                var data = new walker.Walk(target).walk().attribs;
+
+                // Generate a unique copy of the model & view
+                var model = clone.clone(c.model);
+                var view = clone.clone(c.view, data);
+
+                // Render template & replace DOM content
+                var raw = c.template({
+                    data: data,
+                    model: model,
+                    view: view
+                });
+
+                // Populate view & invoke instance handler
+                var instance = new cmp.Instance(target, c, model, view);
+                instance.root.innerHTML = raw;
+                c.instance(new cmp.Ref(instance));
+            }
         });
-
-        // Populate view & invoke instance handler
-        var instance = new cmp.Instance(target, c, model, view);
-        instance.root.innerHTML = raw;
-        c.instance(model, view, target);
-
-        console.log(instance)
-
-        // Inject stylesheet
     }
 }
