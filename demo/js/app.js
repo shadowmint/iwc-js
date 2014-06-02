@@ -8,6 +8,6 @@ require.config({
     }
 });
 
-require(['hello_button'], function() {
+require(['foo/foo'], function() {
   console.log('loaded');
 });
