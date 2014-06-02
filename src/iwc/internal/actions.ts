@@ -1,5 +1,8 @@
 import cmp = require('./component');
-import async = require('./async');
+import async = require('./utils/async');
+import walker = require('./utils/walker');
+import clone = require('./utils/cloner');
+import styles = require('./utils/stylesheet');
 
 /* Set of loaded components */
 var _components:cmp.Component[] = [];
@@ -9,6 +12,7 @@ var _loading:any = null;
 
 /* Validate that a component name is valid */
 export function validate_name(name:string):any {
+    console.log(name);
     if (name.indexOf('-') == -1) {
         throw Error('Components must be named in the NS-NAME format');
     }
@@ -41,16 +45,20 @@ export function register_component(def:cmp.Component):void {
 }
 
 /* Generate a unique updater for a component definition */
-function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp.ComponentChange):void} {
-    return (e:HTMLElement, action:cmp.ComponentChange) => {
+function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp.callbacks.Change):void} {
+    return (e:HTMLElement, action:cmp.callbacks.Change) => {
         try {
             var instance = def.instances[e];
+            if (!instance) {
+                throw new Error('Unable to match component for element');
+            }
         }
         catch (e) {
             throw new Error('Unable to match component for element');
         }
         try {
-            action(instance.model, instance.view, instance.root);
+            console.log(instance);
+            action(new cmp.Ref(instance));
         }
         catch (e) {
             var error = new Error('Unable to update component: ' + e.toString());
@@ -74,31 +82,49 @@ function load_components():void {
     if (_loading != null) {
         clearTimeout(_loading);
     }
-    setTimeout(() => {
+    _loading = setTimeout(() => {
         _loading = null;
         for (var i = 0; i < _components.length; ++i) {
-            var component = _components[i];
-            if (!component.loaded) {
-                async.async(() => { load_component(component); });
-            }
+            load_component(_components[i]);
         }
     }, 100);
 }
 
 /* Load all instances of a single component */
 function load_component(c:cmp.Component):void {
-    var targets = c.targets();
-    for (var i = 0; i < targets.length; ++i) {
-        // Generate a unique copy of the model
-        // Generate a unique copy of the view
+    if (!c.loaded) {
+        async.async(() => {
 
-        // Parse DOM node for component and generate template state
+            // Inject stylesheet
+            console.log("Creating SS: " + c.styles);
+            styles.appendStyleSheet(c.styles, (msg:any) => {
+                console.log('Callback: ' + msg);
+            });
 
-        // Render template & replace DOM content
+            // Load components
+            var targets = c.targets();
+            for (var i = 0; i < targets.length; ++i) {
+                var target = targets[i]
 
-        // Populate view & invoke instance handler
+                // Parse DOM node for component and generate template state
+                var data = new walker.Walk(target).walk().attribs;
 
-        // Inject stylesheet
-        console.log('Processing a component target: ' + targets[i]);
+                // Generate a unique copy of the model & view
+                var model = clone.clone(c.model);
+                var view = clone.clone(c.view, data);
+
+                // Render template & replace DOM content
+                var raw = c.template({
+                    data: data,
+                    model: model,
+                    view: view
+                });
+
+                // Populate view & invoke instance handler
+                var instance = new cmp.Instance(target, c, model, view);
+                instance.root.innerHTML = raw;
+                c.instance(new cmp.Ref(instance));
+            }
+        });
     }
 }

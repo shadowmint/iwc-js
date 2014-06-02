@@ -1,39 +1,59 @@
-/* State fetcher for a component */
-export interface ComponentState { (model:any, view:any):any[]; }
+import async = require('./utils/async');
 
-/* State updater for a component */
-export interface ComponentUpdate { (model:any, view:any):void; }
+/* A component definition from a component() call */
+export interface ComponentDef {
 
-/* Returns a list of component elements to expand */
-export interface ComponentTargets { ():HTMLElement[]; }
-
-/* Update component callback type */
-export interface ComponentChange { (model:any, view:any, root:HTMLElement):void };
-
-/* A component template */
-export interface Component {
-
-    /* Basic identifiers */
-    namespace:string;
+    /* Name */
     name:string;
+    namespace:string;
 
     /* Templates */
     model:any;
     view:any;
-    template:string;
     styles:string;
 
-    /* State functions */
-    targets:ComponentTargets;
-    state:ComponentState;
-    update:ComponentUpdate;
-    instance:any;
+    /* Callbacks for component instance */
+    template:callbacks.Template;
+    targets:callbacks.Targets;
+    state:callbacks.State;
+    update:callbacks.Update;
+    instance:callbacks.Instance;
+}
 
-    /* Instances */
+/* A component template */
+export interface Component extends ComponentDef {
+
+    /* Instances of this component */
     instances:any;
 
     /* If this component is loaded yet */
     loaded:boolean;
+}
+
+/* A public (ie safe) component reference */
+export class Ref {
+    private _instance:Instance;
+    public root:HTMLElement;
+    public model:any;
+    public view:any;
+    public data:any;
+
+    /* Create a light reference from an instance */
+    public constructor(instance:Instance) {
+        this._instance = instance;
+        this.root = instance.root;
+        this.model = instance.model;
+        this.view = instance.view;
+        this.data = instance.data;
+    }
+
+    /* Apply updates to the component */
+    public update():void {
+        async.async(() => {
+            var state = this._instance.state();
+            this._instance.update(state);
+        });
+    }
 }
 
 /* A component instance */
@@ -46,9 +66,19 @@ export class Instance {
     public root:HTMLElement;
     public model:any;
     public view:any;
+    public data:any;
 
     /* Last state record for this instance */
     private _state:any[] = [];
+
+    /* Create a new instance of this component */
+    public constructor(root:HTMLElement, component:Component, model:any, view:any) {
+        this.component = component;
+        this.root = root;
+        this.model = model;
+        this.view = view;
+        component.instances[root] = this;
+    }
 
     /* Return true if the given state is not the current state */
     public changed(state:any[]):boolean {
@@ -65,12 +95,33 @@ export class Instance {
 
     /* Update this component instance and save the new state */
     public update(state:any[]):void {
-        this.component.update(this.model, this.view);
+        this.component.update(new Ref(this));
         this._state = state;
     }
 
     /* Generate a new state record and return it */
     public state():any[] {
-        return this.component.state(this.model, this.view);
+        return this.component.state(new Ref(this));
     }
+}
+
+export module callbacks {
+
+    /* State fetcher for a component */
+    export interface State { (ref:Ref):any[]; }
+
+    /* State updater for a component */
+    export interface Update { (ref:Ref):void; }
+
+    /* Update component callback type */
+    export interface Change { (ref:Ref):void; }
+
+    /* Returns a list of component elements to expand */
+    export interface Targets { ():HTMLElement[]; }
+
+    /* Generate a component layout from a state model */
+    export interface Template { (data:any):string; }
+
+    /* Initialize a component instance */
+    export interface Instance { (ref:Ref):void; }
 }
