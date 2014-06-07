@@ -1,39 +1,25 @@
+'use strict';
+var ext = require('./.gruntExt');
 module.exports = function (grunt) {
 
-    // Extension glue
-    var config = {};
-    var extend = function (destination, source) {
-        for (var property in source) {
-            if (destination.hasOwnProperty(property)) {
-                extend(destination[property], source[property]);
-            } else {
-                destination[property] = source[property];
-            }
-        }
-        return destination;
-    };
-    var configure = function (source) {
-        extend(config, source);
-    };
-
-    // Tasks
-    require('matchdep').filterAll('grunt-*').forEach(function (x) {
-        grunt.loadNpmTasks(x);
-    });
-
     // Common
-    configure({
+    ext.configure({
+        path: {
+            src: 'src/iwc',
+            tmp: 'dist/iwc',
+            dist: 'dist/iwc.js'
+        },
         clean: {
-            src: ['dist/*']
+            src: ['dist/iwc/*', 'dist/iwc.js']
         }
     });
 
     // Library
-    configure({
+    ext.configure({
         ts: {
             lib: {
-                src: ['src/iwc/**/*.ts'],
-                outDir: 'dist/iwc/',
+                src: ['<%= path.src %>/**/*.ts'],
+                outDir: '<%= path.tmp %>',
                 options: {
                     module: 'commonjs',
                     target: 'es3',
@@ -43,18 +29,21 @@ module.exports = function (grunt) {
                 }
             }
         },
+        nodeunit: {
+            lib: '<%= path.tmp %>/**/*_tests.js'
+        },
         browserify: {
             lib: {
                 files: {
-                    'dist/iwc.js': ['dist/iwc/**/*.js']
+                    '<%= path.dist %>': ['<%= path.tmp %>/**/*.js']
                 }
             }
-        },
-
+        }
     });
+    ext.registerTask('_lib', ['ts:lib', 'nodeunit:lib', 'browserify:lib']);
 
     // Dev
-    configure({
+    ext.configure({
         connect: {
             lib: {
                 options: {
@@ -68,20 +57,15 @@ module.exports = function (grunt) {
                 files: ['src/iwc/**/*.ts'],
                 tasks: ['_lib'],
                 options: {
-                    spawn: false,
+                    spawn: true
                 }
             }
         }
     });
+    ext.registerTask('_dev', ['connect', 'watch']);
 
-    // Load combined config
-    grunt.initConfig(config);
-
-    // Builder tasks
-    grunt.registerTask('_lib', ['ts:lib', 'browserify:lib']);
-    grunt.registerTask('_dev', ['connect', 'watch']);
-
-    // External tasks
+    // Tasks
+    ext.initConfig(grunt);
     grunt.registerTask('default', ['clean', '_lib']);
     grunt.registerTask('dev', ['default', '_dev']);
 }

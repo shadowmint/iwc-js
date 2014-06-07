@@ -12,6 +12,11 @@ export module iwc {
         component.loaded = false;
         actions.register_component(component);
     }
+
+    /* Load all components all over again */
+    export function load():void {
+      actions.load_components();
+    }
 }
 
 // Export module for AMD

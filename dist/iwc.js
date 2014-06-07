@@ -13,17 +13,18 @@ var _loading = null;
 
 /* Validate that a component name is valid */
 function validate_name(name) {
-    console.log(name);
     if (name.indexOf('-') == -1) {
         throw Error('Components must be named in the NS-NAME format');
     }
     var name_parts = name.split('-');
-    if (name_parts.length != 2) {
+    if (name_parts.length < 2) {
         throw Error('Components must be named in the NS-NAME format');
     }
+    var ns = name_parts.shift();
+    var name = name_parts.join('-');
     return {
-        name: name_parts[1],
-        namespace: name_parts[0]
+        name: name,
+        namespace: ns
     };
 }
 exports.validate_name = validate_name;
@@ -43,9 +44,23 @@ function register_component(def) {
         window['components'][def.namespace][def.name] = generate_update_callback(def);
     }
     _components.push(def);
-    load_components();
+    exports.load_components();
 }
 exports.register_component = register_component;
+
+/* Deferred component loading */
+function load_components() {
+    if (_loading != null) {
+        clearTimeout(_loading);
+    }
+    _loading = setTimeout(function () {
+        _loading = null;
+        for (var i = 0; i < _components.length; ++i) {
+            load_component(_components[i]);
+        }
+    }, 100);
+}
+exports.load_components = load_components;
 
 /* Generate a unique updater for a component definition */
 function generate_update_callback(def) {
@@ -78,28 +93,12 @@ function update_component(instance) {
     }
 }
 
-/* Deferred component loading */
-function load_components() {
-    if (_loading != null) {
-        clearTimeout(_loading);
-    }
-    _loading = setTimeout(function () {
-        _loading = null;
-        for (var i = 0; i < _components.length; ++i) {
-            load_component(_components[i]);
-        }
-    }, 100);
-}
-
 /* Load all instances of a single component */
 function load_component(c) {
     if (!c.loaded) {
         async.async(function () {
             // Inject stylesheet
-            console.log("Creating SS: " + c.styles);
-            styles.appendStyleSheet(c.styles, function (msg) {
-                console.log('Callback: ' + msg);
-            });
+            styles.appendStyleSheet(c.styles);
 
             // Load components
             var targets = c.targets();
@@ -130,7 +129,31 @@ function load_component(c) {
 }
 //# sourceMappingURL=actions.js.map
 
-},{"./component":2,"./utils/async":3,"./utils/cloner":4,"./utils/stylesheet":5,"./utils/walker":6}],2:[function(require,module,exports){
+},{"./component":3,"./utils/async":4,"./utils/cloner":5,"./utils/stylesheet":6,"./utils/walker":7}],2:[function(require,module,exports){
+var actions = require('./actions');
+
+function test_invalid_component_names_fail(test) {
+    test.throws(function () {
+        actions.validate_name('hello');
+    }, 'Error', 'Components must be named in the NS-NAME format');
+    test.done();
+}
+exports.test_invalid_component_names_fail = test_invalid_component_names_fail;
+
+function test_valid_simple_component_names_pass(test) {
+    actions.validate_name('ns-name');
+    test.done();
+}
+exports.test_valid_simple_component_names_pass = test_valid_simple_component_names_pass;
+
+function test_valid_complex_component_names_pass(test) {
+    actions.validate_name('ns-name-other-part');
+    test.done();
+}
+exports.test_valid_complex_component_names_pass = test_valid_complex_component_names_pass;
+//# sourceMappingURL=actions_tests.js.map
+
+},{"./actions":1}],3:[function(require,module,exports){
 var async = require('./utils/async');
 
 
@@ -197,7 +220,7 @@ var Instance = (function () {
 exports.Instance = Instance;
 //# sourceMappingURL=component.js.map
 
-},{"./utils/async":3}],3:[function(require,module,exports){
+},{"./utils/async":4}],4:[function(require,module,exports){
 /* Invoke an action async */
 function async(action) {
     setTimeout(function () {
@@ -207,7 +230,7 @@ function async(action) {
 exports.async = async;
 //# sourceMappingURL=async.js.map
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 /* Perform a shallow clone of a dictionary */
 function clone(a, ref) {
     if (typeof ref === "undefined") { ref = null; }
@@ -232,7 +255,7 @@ function merge(a, b) {
 exports.merge = merge;
 //# sourceMappingURL=cloner.js.map
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
@@ -369,7 +392,7 @@ function replaceStyleSheet(node, css, callback) {
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 /* Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
@@ -425,7 +448,7 @@ var Walk = (function () {
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 var actions = require('./internal/actions');
 
 (function (iwc) {
@@ -440,6 +463,12 @@ var actions = require('./internal/actions');
         actions.register_component(component);
     }
     iwc.component = component;
+
+    /* Load all components all over again */
+    function load() {
+        actions.load_components();
+    }
+    iwc.load = load;
 })(exports.iwc || (exports.iwc = {}));
 var iwc = exports.iwc;
 
@@ -448,4 +477,4 @@ define('iwc', function () {
 });
 //# sourceMappingURL=iwc.js.map
 
-},{"./internal/actions":1}]},{},[1,2,3,4,5,6,7])
+},{"./internal/actions":1}]},{},[1,2,3,4,5,6,7,8])

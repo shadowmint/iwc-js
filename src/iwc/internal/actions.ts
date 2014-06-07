@@ -12,17 +12,18 @@ var _loading:any = null;
 
 /* Validate that a component name is valid */
 export function validate_name(name:string):any {
-    console.log(name);
     if (name.indexOf('-') == -1) {
         throw Error('Components must be named in the NS-NAME format');
     }
     var name_parts = name.split('-');
-    if (name_parts.length != 2) {
+    if (name_parts.length < 2) {
         throw Error('Components must be named in the NS-NAME format');
     }
+    var ns = name_parts.shift();
+    var name = name_parts.join('-');
     return {
-        name: name_parts[1],
-        namespace: name_parts[0]
+        name: name,
+        namespace: ns
     };
 }
 
@@ -42,6 +43,19 @@ export function register_component(def:cmp.Component):void {
     }
     _components.push(def);
     load_components();
+}
+
+/* Deferred component loading */
+export function load_components():void {
+    if (_loading != null) {
+        clearTimeout(_loading);
+    }
+    _loading = setTimeout(() => {
+        _loading = null;
+        for (var i = 0; i < _components.length; ++i) {
+            load_component(_components[i]);
+        }
+    }, 100);
 }
 
 /* Generate a unique updater for a component definition */
@@ -77,29 +91,13 @@ function update_component(instance:cmp.Instance):void {
     }
 }
 
-/* Deferred component loading */
-function load_components():void {
-    if (_loading != null) {
-        clearTimeout(_loading);
-    }
-    _loading = setTimeout(() => {
-        _loading = null;
-        for (var i = 0; i < _components.length; ++i) {
-            load_component(_components[i]);
-        }
-    }, 100);
-}
-
 /* Load all instances of a single component */
 function load_component(c:cmp.Component):void {
     if (!c.loaded) {
         async.async(() => {
 
             // Inject stylesheet
-            console.log("Creating SS: " + c.styles);
-            styles.appendStyleSheet(c.styles, (msg:any) => {
-                console.log('Callback: ' + msg);
-            });
+            styles.appendStyleSheet(c.styles);
 
             // Load components
             var targets = c.targets();
