@@ -19,15 +19,12 @@ export module iwc {
   }
 }
 
-// Export module for AMD
+// Export module for AMD in browserify
 declare var define:any;
-declare var module:any;
 try {
   define('iwc', function () {
     return iwc;
   });
 }
 catch (e) {
-  console.log(iwc);
-  module.exports = iwc;
 }
