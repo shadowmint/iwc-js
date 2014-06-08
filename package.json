@@ -2,7 +2,7 @@
   "name": "iwc.js",
   "version": "0.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/iwc.js",
   "scripts": {
     "quickstart": "npm install && grunt"
   },
