@@ -472,9 +472,15 @@ var actions = require('./internal/actions');
 })(exports.iwc || (exports.iwc = {}));
 var iwc = exports.iwc;
 
-define('iwc', function () {
-    return iwc;
-});
+
+try  {
+    define('iwc', function () {
+        return iwc;
+    });
+} catch (e) {
+    console.log(iwc);
+    module.exports = iwc;
+}
 //# sourceMappingURL=iwc.js.map
 
 },{"./internal/actions":1}]},{},[1,2,3,4,5,6,7,8])
