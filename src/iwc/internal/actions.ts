@@ -120,8 +120,10 @@ function load_component(c:cmp.Component):void {
 
                 // Populate view & invoke instance handler
                 var instance = new cmp.Instance(target, c, model, view);
+                var ref = new cmp.Ref(instance);
                 instance.root.innerHTML = raw;
-                c.instance(new cmp.Ref(instance));
+                c.instance(ref);
+                ref.update();
             }
         });
     }
