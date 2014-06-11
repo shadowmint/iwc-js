@@ -1,4 +1,5 @@
 import async = require('./utils/async');
+declare var components;
 
 /* A component definition from a component() call */
 export interface ComponentDef {
@@ -55,6 +56,11 @@ export class Ref {
       var state = this._instance.state();
       this._instance.update(state);
     });
+  }
+
+  /* Run the component callback; for events etc */
+  public action(act:{(r:Ref):void}):void{
+    components[this._instance.component.namespace][this._instance.component.name](this.root, act);
   }
 }
 
