@@ -2,12 +2,10 @@
 export function clone(a, ref:any = null):any {
     var rtn:any = {};
     for (var key in a) {
-        if (ref && ref[key]) {
-            rtn[key] = ref[key];
-        }
-        else {
-            rtn[key] = a[key];
-        }
+        rtn[key] = a[key];
+    }
+    for (var key in ref) {
+        rtn[key] = ref[key];
     }
     return JSON.parse(JSON.stringify(rtn));
 }

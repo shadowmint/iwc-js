@@ -91,6 +91,15 @@ export class Instance {
 
   /* Return true if the given state is not the current state */
   public changed(state:any[]):boolean {
+    if (!state && !this._state) {
+      return false;
+    }
+    if (state && !this._state) {
+      return true;
+    }
+    if (!state && this._state) {
+      return true;
+    }
     if (this._state.length != state.length) {
       return true;
     }

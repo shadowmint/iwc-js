@@ -64,30 +64,37 @@ exports.load_components = load_components;
 
 /* Generate a unique updater for a component definition */
 function generate_update_callback(def) {
-    return function (e, action) {
-        try  {
-            var instance = def.instances[e];
-            if (!instance) {
+    var callback = function (e, action) {
+        if (!def.loaded) {
+            setTimeout(function () {
+                callback(e, action);
+            }, 100);
+        } else {
+            try  {
+                var instance = def.instances[e];
+                if (!instance) {
+                    throw new Error('Unable to match component for element');
+                }
+            } catch (e) {
                 throw new Error('Unable to match component for element');
             }
-        } catch (e) {
-            throw new Error('Unable to match component for element');
+            try  {
+                console.log(instance);
+                action(new cmp.Ref(instance));
+            } catch (e) {
+                var error = new Error('Unable to update component: ' + e.toString());
+                error['innerException'] = e;
+                throw error;
+            }
+            update_component(instance);
         }
-        try  {
-            console.log(instance);
-            action(new cmp.Ref(instance));
-        } catch (e) {
-            var error = new Error('Unable to update component: ' + e.toString());
-            error['innerException'] = e;
-            throw error;
-        }
-        update_component(instance);
     };
+    return callback;
 }
 
 /* Check if a componet has a changed state and invoke the update call on it if so */
 function update_component(instance) {
-    var state = instance.state ? null : instance.state();
+    var state = instance.state ? instance.state() : null;
     if (instance.changed(state)) {
         if (instance.update) {
             instance.update(state);
@@ -141,6 +148,9 @@ function load_component(c) {
                 }
                 ref.update();
             }
+
+            // Ready now!
+            c.loaded = true;
         });
     }
 }
@@ -216,6 +226,15 @@ var Instance = (function () {
     }
     /* Return true if the given state is not the current state */
     Instance.prototype.changed = function (state) {
+        if (!state && !this._state) {
+            return false;
+        }
+        if (state && !this._state) {
+            return true;
+        }
+        if (!state && this._state) {
+            return true;
+        }
         if (this._state.length != state.length) {
             return true;
         }
@@ -258,11 +277,10 @@ function clone(a, ref) {
     if (typeof ref === "undefined") { ref = null; }
     var rtn = {};
     for (var key in a) {
-        if (ref && ref[key]) {
-            rtn[key] = ref[key];
-        } else {
-            rtn[key] = a[key];
-        }
+        rtn[key] = a[key];
+    }
+    for (var key in ref) {
+        rtn[key] = ref[key];
     }
     return JSON.parse(JSON.stringify(rtn));
 }

@@ -60,32 +60,40 @@ export function load_components():void {
 
 /* Generate a unique updater for a component definition */
 function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp.callbacks.Change):void} {
-    return (e:HTMLElement, action:cmp.callbacks.Change) => {
-        try {
-            var instance = def.instances[e];
-            if (!instance) {
+    var callback = (e:HTMLElement, action:cmp.callbacks.Change) => {
+        if (!def.loaded) {
+            setTimeout(() => {
+                callback(e, action);
+            }, 100)
+        }
+        else {
+            try {
+                var instance = def.instances[e];
+                if (!instance) {
+                    throw new Error('Unable to match component for element');
+                }
+            }
+            catch (e) {
                 throw new Error('Unable to match component for element');
             }
+            try {
+                console.log(instance);
+                action(new cmp.Ref(instance));
+            }
+            catch (e) {
+                var error = new Error('Unable to update component: ' + e.toString());
+                error['innerException'] = e;
+                throw error;
+            }
+            update_component(instance);
         }
-        catch (e) {
-            throw new Error('Unable to match component for element');
-        }
-        try {
-            console.log(instance);
-            action(new cmp.Ref(instance));
-        }
-        catch (e) {
-            var error = new Error('Unable to update component: ' + e.toString());
-            error['innerException'] = e;
-            throw error;
-        }
-        update_component(instance);
     };
+    return callback;
 }
 
 /* Check if a componet has a changed state and invoke the update call on it if so */
 function update_component(instance:cmp.Instance):void {
-    var state = instance.state ? null : instance.state();
+    var state = instance.state ? instance.state() : null;
     if (instance.changed(state)) {
         if (instance.update) {
             instance.update(state);
@@ -118,7 +126,9 @@ function load_component(c:cmp.Component):void {
                 var ref = new cmp.Ref(instance);
 
                 // Preload, if any, on the original content
-                if (c.preload) { c.preload(ref); }
+                if (c.preload) {
+                    c.preload(ref);
+                }
 
                 // Render template & replace DOM content
                 var raw = !c.template ? null : c.template({
@@ -128,12 +138,19 @@ function load_component(c:cmp.Component):void {
                 });
 
                 // Populate if template worked
-                if (raw != null) { instance.root.innerHTML = raw; }
+                if (raw != null) {
+                    instance.root.innerHTML = raw;
+                }
 
                 // Invoke instance if any
-                if (c.instance) { c.instance(ref); }
+                if (c.instance) {
+                    c.instance(ref);
+                }
                 ref.update();
             }
+
+            // Ready now!
+            c.loaded = true;
         });
     }
 }
