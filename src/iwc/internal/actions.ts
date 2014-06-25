@@ -85,9 +85,11 @@ function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp
 
 /* Check if a componet has a changed state and invoke the update call on it if so */
 function update_component(instance:cmp.Instance):void {
-    var state = instance.state();
+    var state = instance.state ? null : instance.state();
     if (instance.changed(state)) {
-        instance.update(state);
+        if (instance.update) {
+            instance.update(state);
+        }
     }
 }
 
@@ -111,18 +113,25 @@ function load_component(c:cmp.Component):void {
                 var model = clone.clone(c.model);
                 var view = clone.clone(c.view, data);
 
+                // Populate view & invoke instance handler
+                var instance = new cmp.Instance(target, c, model, view);
+                var ref = new cmp.Ref(instance);
+
+                // Preload, if any, on the original content
+                if (c.preload) { c.preload(ref); }
+
                 // Render template & replace DOM content
-                var raw = c.template({
+                var raw = !c.template ? null : c.template({
                     data: data,
                     model: model,
                     view: view
                 });
 
-                // Populate view & invoke instance handler
-                var instance = new cmp.Instance(target, c, model, view);
-                var ref = new cmp.Ref(instance);
-                instance.root.innerHTML = raw;
-                c.instance(ref);
+                // Populate if template worked
+                if (raw != null) { instance.root.innerHTML = raw; }
+
+                // Invoke instance if any
+                if (c.instance) { c.instance(ref); }
                 ref.update();
             }
         });

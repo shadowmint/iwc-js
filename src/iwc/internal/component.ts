@@ -18,6 +18,7 @@ export interface ComponentDef {
   state:callbacks.State;
   update:callbacks.Update;
   instance:callbacks.Instance;
+  preload:callbacks.Preload;
 }
 
 /* A full component template */
@@ -116,26 +117,23 @@ export class Instance {
 export module callbacks {
 
   /* State fetcher for a component */
-  export interface State { (ref:Ref):any[];
-  }
+  export interface State { (ref:Ref):any[]; }
 
   /* State updater for a component */
-  export interface Update { (ref:Ref):void;
-  }
+  export interface Update { (ref:Ref):void; }
 
   /* Update component callback type */
-  export interface Change { (ref:Ref):void;
-  }
+  export interface Change { (ref:Ref):void; }
 
   /* Returns a list of component elements to expand */
-  export interface Targets { ():HTMLElement[];
-  }
+  export interface Targets { ():HTMLElement[]; }
 
   /* Generate a component layout from a state model */
-  export interface Template { (data:any):string;
-  }
+  export interface Template { (data:any):string; }
 
   /* Initialize a component instance */
-  export interface Instance { (ref:Ref):void;
-  }
+  export interface Preload { (ref:Ref):void; }
+
+  /* Initialize a component instance */
+  export interface Instance { (ref:Ref):void; }
 }

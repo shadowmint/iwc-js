@@ -87,9 +87,11 @@ function generate_update_callback(def) {
 
 /* Check if a componet has a changed state and invoke the update call on it if so */
 function update_component(instance) {
-    var state = instance.state();
+    var state = instance.state ? null : instance.state();
     if (instance.changed(state)) {
-        instance.update(state);
+        if (instance.update) {
+            instance.update(state);
+        }
     }
 }
 
@@ -112,17 +114,32 @@ function load_component(c) {
                 var model = clone.clone(c.model);
                 var view = clone.clone(c.view, data);
 
+                // Populate view & invoke instance handler
+                var instance = new cmp.Instance(target, c, model, view);
+                var ref = new cmp.Ref(instance);
+
+                // Preload, if any, on the original content
+                if (c.preload) {
+                    c.preload(ref);
+                }
+
                 // Render template & replace DOM content
-                var raw = c.template({
+                var raw = !c.template ? null : c.template({
                     data: data,
                     model: model,
                     view: view
                 });
 
-                // Populate view & invoke instance handler
-                var instance = new cmp.Instance(target, c, model, view);
-                instance.root.innerHTML = raw;
-                c.instance(new cmp.Ref(instance));
+                // Populate if template worked
+                if (raw != null) {
+                    instance.root.innerHTML = raw;
+                }
+
+                // Invoke instance if any
+                if (c.instance) {
+                    c.instance(ref);
+                }
+                ref.update();
             }
         });
     }
@@ -175,6 +192,11 @@ var Ref = (function () {
             var state = _this._instance.state();
             _this._instance.update(state);
         });
+    };
+
+    /* Run the component callback; for events etc */
+    Ref.prototype.action = function (act) {
+        components[this._instance.component.namespace][this._instance.component.name](this.root, act);
     };
     return Ref;
 })();
@@ -472,14 +494,11 @@ var actions = require('./internal/actions');
 })(exports.iwc || (exports.iwc = {}));
 var iwc = exports.iwc;
 
-
 try  {
     define('iwc', function () {
         return iwc;
     });
 } catch (e) {
-    console.log(iwc);
-    module.exports = iwc;
 }
 //# sourceMappingURL=iwc.js.map
 
