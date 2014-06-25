@@ -77,7 +77,6 @@ function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp
                 throw new Error('Unable to match component for element');
             }
             try {
-                console.log(instance);
                 action(new cmp.Ref(instance));
             }
             catch (e) {

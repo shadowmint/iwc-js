@@ -79,7 +79,6 @@ function generate_update_callback(def) {
                 throw new Error('Unable to match component for element');
             }
             try  {
-                console.log(instance);
                 action(new cmp.Ref(instance));
             } catch (e) {
                 var error = new Error('Unable to update component: ' + e.toString());
