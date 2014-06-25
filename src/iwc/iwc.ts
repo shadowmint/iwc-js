@@ -10,6 +10,7 @@ export module iwc {
     component.namespace = named.namespace;
     component.instances = {};
     component.loaded = false;
+    component.next_id = 1;
     actions.register_component(component);
   }
 

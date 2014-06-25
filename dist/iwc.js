@@ -71,7 +71,8 @@ function generate_update_callback(def) {
             }, 100);
         } else {
             try  {
-                var instance = def.instances[e];
+                var id = e['data-component'];
+                var instance = def.instances[id];
                 if (!instance) {
                     throw new Error('Unable to match component for element');
                 }
@@ -206,6 +207,7 @@ var Ref = (function () {
     /* Run the component callback; for events etc */
     Ref.prototype.action = function (act) {
         components[this._instance.component.namespace][this._instance.component.name](this.root, act);
+        console.log(this.root);
     };
     return Ref;
 })();
@@ -221,7 +223,10 @@ var Instance = (function () {
         this.root = root;
         this.model = model;
         this.view = view;
-        component.instances[root] = this;
+        this.id = component.next_id;
+        this.root['data-component'] = this.id;
+        component.instances[this.id] = this;
+        component.next_id += 1;
     }
     /* Return true if the given state is not the current state */
     Instance.prototype.changed = function (state) {
@@ -499,6 +504,7 @@ var actions = require('./internal/actions');
         component.namespace = named.namespace;
         component.instances = {};
         component.loaded = false;
+        component.next_id = 1;
         actions.register_component(component);
     }
     iwc.component = component;

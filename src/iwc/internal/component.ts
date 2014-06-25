@@ -24,6 +24,9 @@ export interface ComponentDef {
 /* A full component template */
 export interface Component extends ComponentDef {
 
+  /* Internal instance id namespace */
+  next_id:number;
+
   /* Actual namespace derived from name */
   namespace:string;
 
@@ -62,6 +65,7 @@ export class Ref {
   /* Run the component callback; for events etc */
   public action(act:{(r:Ref):void}):void{
     components[this._instance.component.namespace][this._instance.component.name](this.root, act);
+    console.log(this.root);
   }
 }
 
@@ -72,6 +76,7 @@ export class Instance {
   public component:Component;
 
   /* Public reference for this component */
+  public id:number;
   public root:HTMLElement;
   public model:any;
   public view:any;
@@ -86,7 +91,10 @@ export class Instance {
     this.root = root;
     this.model = model;
     this.view = view;
-    component.instances[root] = this;
+    this.id = component.next_id;
+    this.root['data-component'] = this.id;
+    component.instances[this.id] = this;
+    component.next_id += 1;
   }
 
   /* Return true if the given state is not the current state */

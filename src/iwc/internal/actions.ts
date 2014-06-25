@@ -68,7 +68,8 @@ function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp
         }
         else {
             try {
-                var instance = def.instances[e];
+                var id = e['data-component'];
+                var instance = def.instances[id];
                 if (!instance) {
                     throw new Error('Unable to match component for element');
                 }
