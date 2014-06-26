@@ -4,13 +4,13 @@ import walker = require('./utils/walker');
 import clone = require('./utils/cloner');
 import styles = require('./utils/stylesheet');
 
-/* Set of loaded components */
+/** Set of loaded components */
 var _components:cmp.Component[] = [];
 
-/* Deferred loading helper */
+/** Deferred loading helper */
 var _loading:any = null;
 
-/* Validate that a component name is valid */
+/** Validate that a component name is valid */
 export function validate_name(name:string):any {
     if (name.indexOf('-') == -1) {
         throw Error('Components must be named in the NS-NAME format');
@@ -45,7 +45,7 @@ export function register_component(def:cmp.Component):void {
     load_components();
 }
 
-/* Deferred component loading */
+/** Deferred component loading */
 export function load_components():void {
     if (_loading != null) {
         clearTimeout(_loading);
@@ -58,7 +58,7 @@ export function load_components():void {
     }, 100);
 }
 
-/* Generate a unique updater for a component definition */
+/** Generate a unique updater for a component definition */
 function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp.callbacks.Change):void} {
     var callback = (e:HTMLElement, action:cmp.callbacks.Change) => {
         if (!def.loaded) {
@@ -91,7 +91,7 @@ function generate_update_callback(def:cmp.Component):{(e:HTMLElement, action:cmp
     return callback;
 }
 
-/* Check if a componet has a changed state and invoke the update call on it if so */
+/** Check if a componet has a changed state and invoke the update call on it if so */
 function update_component(instance:cmp.Instance):void {
     var state = instance.state ? instance.state() : null;
     if (instance.changed(state)) {
@@ -101,7 +101,7 @@ function update_component(instance:cmp.Instance):void {
     }
 }
 
-/* Load all instances of a single component */
+/** Load all instances of a single component */
 function load_component(c:cmp.Component):void {
     if (!c.loaded) {
         async.async(() => {

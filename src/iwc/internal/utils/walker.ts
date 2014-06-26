@@ -1,17 +1,17 @@
-/* Walk through the DOM and touch each node */
+/** Walk through the DOM and touch each node */
 export class Walk {
 
-    /* Element root */
+    /** Element root */
     public root:HTMLElement;
 
-    /* Set of loaded data attribute */
+    /** Set of loaded data attribute */
     public attribs:any;
 
     public constructor(root:HTMLElement) {
         this.root = root;
     }
 
-    /* Walk the DOM and collect all data attributes */
+    /** Walk the DOM and collect all data attributes */
     public walk():Walk {
         this.attribs = {};
         this.each((n:Node) => { this.data(n); });
@@ -23,7 +23,7 @@ export class Walk {
         return this;
     }
 
-    /* Invoke a callback for each DOM node */
+    /** Invoke a callback for each DOM node */
     public each(callback:{(node:Node):void}):void {
         var stack:Node[] = [this.root];
         while (stack.length != 0) {
@@ -35,7 +35,7 @@ export class Walk {
         }
     }
 
-    /* Get a list of data attributes from a node */
+    /** Get a list of data attributes from a node */
     public data(node:Node):any[] {
         var rtn:any[] = [];
         if (node.attributes) {

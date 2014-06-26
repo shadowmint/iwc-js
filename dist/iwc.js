@@ -5,13 +5,13 @@ var walker = require('./utils/walker');
 var clone = require('./utils/cloner');
 var styles = require('./utils/stylesheet');
 
-/* Set of loaded components */
+/** Set of loaded components */
 var _components = [];
 
-/* Deferred loading helper */
+/** Deferred loading helper */
 var _loading = null;
 
-/* Validate that a component name is valid */
+/** Validate that a component name is valid */
 function validate_name(name) {
     if (name.indexOf('-') == -1) {
         throw Error('Components must be named in the NS-NAME format');
@@ -48,7 +48,7 @@ function register_component(def) {
 }
 exports.register_component = register_component;
 
-/* Deferred component loading */
+/** Deferred component loading */
 function load_components() {
     if (_loading != null) {
         clearTimeout(_loading);
@@ -62,7 +62,7 @@ function load_components() {
 }
 exports.load_components = load_components;
 
-/* Generate a unique updater for a component definition */
+/** Generate a unique updater for a component definition */
 function generate_update_callback(def) {
     var callback = function (e, action) {
         if (!def.loaded) {
@@ -92,7 +92,7 @@ function generate_update_callback(def) {
     return callback;
 }
 
-/* Check if a componet has a changed state and invoke the update call on it if so */
+/** Check if a componet has a changed state and invoke the update call on it if so */
 function update_component(instance) {
     var state = instance.state ? instance.state() : null;
     if (instance.changed(state)) {
@@ -102,7 +102,7 @@ function update_component(instance) {
     }
 }
 
-/* Load all instances of a single component */
+/** Load all instances of a single component */
 function load_component(c) {
     if (!c.loaded) {
         async.async(function () {
@@ -185,9 +185,9 @@ var async = require('./utils/async');
 
 
 
-/* A public (ie safe) component reference */
+/** A public (ie safe) component reference */
 var Ref = (function () {
-    /* Create a light reference from an instance */
+    /** Create a light reference from an instance */
     function Ref(instance) {
         this._instance = instance;
         this.root = instance.root;
@@ -195,7 +195,7 @@ var Ref = (function () {
         this.view = instance.view;
         this.data = instance.data;
     }
-    /* Apply updates to the component */
+    /** Apply updates to the component */
     Ref.prototype.update = function () {
         var _this = this;
         async.async(function () {
@@ -204,20 +204,19 @@ var Ref = (function () {
         });
     };
 
-    /* Run the component callback; for events etc */
+    /** Run the component callback; for events etc */
     Ref.prototype.action = function (act) {
         components[this._instance.component.namespace][this._instance.component.name](this.root, act);
-        console.log(this.root);
     };
     return Ref;
 })();
 exports.Ref = Ref;
 
-/* A component instance */
+/** A component instance */
 var Instance = (function () {
-    /* Create a new instance of this component */
+    /** Create a new instance of this component */
     function Instance(root, component, model, view) {
-        /* Last state record for this instance */
+        /** Last state record for this instance */
         this._state = [];
         this.component = component;
         this.root = root;
@@ -228,7 +227,7 @@ var Instance = (function () {
         component.instances[this.id] = this;
         component.next_id += 1;
     }
-    /* Return true if the given state is not the current state */
+    /** Return true if the given state is not the current state */
     Instance.prototype.changed = function (state) {
         if (!state && !this._state) {
             return false;
@@ -250,13 +249,13 @@ var Instance = (function () {
         return false;
     };
 
-    /* Update this component instance and save the new state */
+    /** Update this component instance and save the new state */
     Instance.prototype.update = function (state) {
         this.component.update(new Ref(this));
         this._state = state;
     };
 
-    /* Generate a new state record and return it */
+    /** Generate a new state record and return it */
     Instance.prototype.state = function () {
         return this.component.state(new Ref(this));
     };
@@ -266,7 +265,7 @@ exports.Instance = Instance;
 //# sourceMappingURL=component.js.map
 
 },{"./utils/async":4}],4:[function(require,module,exports){
-/* Invoke an action async */
+/** Invoke an action async */
 function async(action) {
     setTimeout(function () {
         action();
@@ -276,7 +275,7 @@ exports.async = async;
 //# sourceMappingURL=async.js.map
 
 },{}],5:[function(require,module,exports){
-/* Perform a shallow clone of a dictionary */
+/** Perform a shallow clone of a dictionary */
 function clone(a, ref) {
     if (typeof ref === "undefined") { ref = null; }
     var rtn = {};
@@ -290,7 +289,7 @@ function clone(a, ref) {
 }
 exports.clone = clone;
 
-/* Shallow merge dictionary b into dictionary a */
+/** Shallow merge dictionary b into dictionary a */
 function merge(a, b) {
     for (var key in b) {
         a[key] = b[key];
@@ -437,12 +436,12 @@ exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
 
 },{}],7:[function(require,module,exports){
-/* Walk through the DOM and touch each node */
+/** Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
         this.root = root;
     }
-    /* Walk the DOM and collect all data attributes */
+    /** Walk the DOM and collect all data attributes */
     Walk.prototype.walk = function () {
         var _this = this;
         this.attribs = {};
@@ -457,7 +456,7 @@ var Walk = (function () {
         return this;
     };
 
-    /* Invoke a callback for each DOM node */
+    /** Invoke a callback for each DOM node */
     Walk.prototype.each = function (callback) {
         var stack = [this.root];
         while (stack.length != 0) {
@@ -469,7 +468,7 @@ var Walk = (function () {
         }
     };
 
-    /* Get a list of data attributes from a node */
+    /** Get a list of data attributes from a node */
     Walk.prototype.data = function (node) {
         var rtn = [];
         if (node.attributes) {
@@ -496,7 +495,7 @@ exports.Walk = Walk;
 var actions = require('./internal/actions');
 
 (function (iwc) {
-    /* Register a new component */
+    /** Register a new component */
     function component(data) {
         var named = actions.validate_name(data.name);
         var component = data;
@@ -509,11 +508,89 @@ var actions = require('./internal/actions');
     }
     iwc.component = component;
 
-    /* Load all components all over again */
+    /** Load all components all over again */
     function load() {
         actions.load_components();
     }
     iwc.load = load;
+
+    
+
+    /** Optional common helper base for IWC instances */
+    var Base = (function () {
+        /** Create a component with a given name */
+        function Base(name, data) {
+            this.name = name;
+            this._data = data;
+        }
+        /** Return elements */
+        Base.prototype.targets = function () {
+            return [];
+        };
+
+        /** Return the new dom node content */
+        Base.prototype.template = function (data) {
+            return this._data.markup;
+        };
+
+        /** Return the model for this component */
+        Base.prototype.model = function () {
+            return {};
+        };
+
+        /** Return the view for this component */
+        Base.prototype.view = function () {
+            return {};
+        };
+
+        /** Return a state for the component */
+        Base.prototype.state = function (ref) {
+            return [];
+        };
+
+        /** Update the component state from the model */
+        Base.prototype.update = function (ref) {
+        };
+
+        /** Run this on instances once the dom is updated */
+        Base.prototype.instance = function (ref) {
+        };
+
+        /** Run this on instances before the dom is updated */
+        Base.prototype.preload = function (ref) {
+        };
+
+        /** Export a definition for this instance */
+        Base.prototype.def = function () {
+            var _this = this;
+            return {
+                name: this.name,
+                model: this.model(),
+                view: this.view(),
+                styles: this._data.styles,
+                targets: function () {
+                    return _this.targets();
+                },
+                template: function (data) {
+                    return _this.template(data);
+                },
+                instance: function (ref) {
+                    _this.instance(ref);
+                },
+                preload: function (ref) {
+                    _this.preload(ref);
+                },
+                state: function (ref) {
+                    return _this.state(ref);
+                },
+                update: function (ref) {
+                    _this.update(ref);
+                }
+            };
+        };
+        return Base;
+    })();
+    iwc.Base = Base;
 })(exports.iwc || (exports.iwc = {}));
 var iwc = exports.iwc;
 
@@ -525,4 +602,4 @@ try  {
 }
 //# sourceMappingURL=iwc.js.map
 
-},{"./internal/actions":1}]},{},[1,2,3,4,5,6,7,8])
+},{"./internal/actions":1}]},{},[1,2,3,4,5,6,7,8]);
