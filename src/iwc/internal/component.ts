@@ -19,6 +19,7 @@ export interface ComponentDef {
   update:callbacks.Update;
   instance:callbacks.Instance;
   preload:callbacks.Preload;
+  api:callbacks.Api;
 }
 
 /** A full component template */
@@ -44,6 +45,7 @@ export class Ref {
   public model:any;
   public view:any;
   public data:any;
+  public api:any;
 
   /** Create a light reference from an instance */
   public constructor(instance:Instance) {
@@ -52,6 +54,7 @@ export class Ref {
     this.model = instance.model;
     this.view = instance.view;
     this.data = instance.data;
+    this.api = instance.api;
   }
 
   /** Apply updates to the component */
@@ -80,6 +83,7 @@ export class Instance {
   public model:any;
   public view:any;
   public data:any;
+  public api:any;
 
   /** Last state record for this instance */
   private _state:any[] = [];
@@ -90,6 +94,7 @@ export class Instance {
     this.root = root;
     this.model = model;
     this.view = view;
+    this.api = component.api();
     this.id = component.next_id;
     this.root['data-component'] = this.id;
     component.instances[this.id] = this;
@@ -146,6 +151,9 @@ export module callbacks {
 
   /** Generate a component layout from a state model */
   export interface Template { (data:any):string; }
+
+  /** Return a component api */
+  export interface Api { ():any; }
 
   /** Initialize a component instance */
   export interface Preload { (ref:Ref):void; }

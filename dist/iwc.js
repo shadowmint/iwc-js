@@ -194,6 +194,7 @@ var Ref = (function () {
         this.model = instance.model;
         this.view = instance.view;
         this.data = instance.data;
+        this.api = instance.api;
     }
     /** Apply updates to the component */
     Ref.prototype.update = function () {
@@ -222,6 +223,7 @@ var Instance = (function () {
         this.root = root;
         this.model = model;
         this.view = view;
+        this.api = component.api();
         this.id = component.next_id;
         this.root['data-component'] = this.id;
         component.instances[this.id] = this;
@@ -523,6 +525,11 @@ var actions = require('./internal/actions');
             this.name = name;
             this._data = data;
         }
+        /** Return api */
+        Base.prototype.api = function () {
+            return {};
+        };
+
         /** Return elements */
         Base.prototype.targets = function () {
             return [];
@@ -568,6 +575,9 @@ var actions = require('./internal/actions');
                 model: this.model(),
                 view: this.view(),
                 styles: this._data.styles,
+                api: function () {
+                    return _this.api();
+                },
                 targets: function () {
                     return _this.targets();
                 },

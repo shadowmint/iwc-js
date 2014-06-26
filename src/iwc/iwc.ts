@@ -41,6 +41,11 @@ export module iwc {
             this._data = data;
         }
 
+        /** Return api */
+        public api():any {
+          return {};
+        }
+
         /** Return elements */
         public targets():HTMLElement[] {
             return [];
@@ -85,6 +90,9 @@ export module iwc {
                 model: this.model(),
                 view: this.view(),
                 styles: this._data.styles,
+                api: ():any => {
+                    return this.api();
+                },
                 targets: ():HTMLElement[] => {
                     return this.targets();
                 },
