@@ -119,10 +119,10 @@ function load_component(c) {
 
                 // Generate a unique copy of the model & view
                 var model = clone.clone(c.model);
-                var view = clone.clone(c.view, data);
+                var view = clone.clone(c.view);
 
                 // Populate view & invoke instance handler
-                var instance = new cmp.Instance(target, c, model, view);
+                var instance = new cmp.Instance(target, c, model, view, data);
                 var ref = new cmp.Ref(instance);
 
                 // Preload, if any, on the original content
@@ -216,13 +216,14 @@ exports.Ref = Ref;
 /** A component instance */
 var Instance = (function () {
     /** Create a new instance of this component */
-    function Instance(root, component, model, view) {
+    function Instance(root, component, model, view, data) {
         /** Last state record for this instance */
         this._state = [];
         this.component = component;
         this.root = root;
         this.model = model;
         this.view = view;
+        this.data = data;
         this.api = component.api();
         this.id = component.next_id;
         this.root['data-component'] = this.id;
@@ -278,14 +279,10 @@ exports.async = async;
 
 },{}],5:[function(require,module,exports){
 /** Perform a shallow clone of a dictionary */
-function clone(a, ref) {
-    if (typeof ref === "undefined") { ref = null; }
+function clone(a) {
     var rtn = {};
     for (var key in a) {
         rtn[key] = a[key];
-    }
-    for (var key in ref) {
-        rtn[key] = ref[key];
     }
     return JSON.parse(JSON.stringify(rtn));
 }
@@ -450,11 +447,6 @@ var Walk = (function () {
         this.each(function (n) {
             _this.data(n);
         });
-        for (var key in this.attribs) {
-            if (this.attribs[key].length == 1) {
-                this.attribs[key] = this.attribs[key][0];
-            }
-        }
         return this;
     };
 
@@ -474,14 +466,21 @@ var Walk = (function () {
     Walk.prototype.data = function (node) {
         var rtn = [];
         if (node.attributes) {
-            var a = [].filter.call(node.attributes, function (at) {
-                return /^data-/.test(at.name);
-            });
+            var a = [];
+            for (var i = 0; i < node.attributes.length; ++i) {
+                var at = node.attributes[i];
+                if (/^data-/.test(at.name)) {
+                    a.push(at);
+                }
+            }
             for (var i = 0; i < a.length; ++i) {
                 var name = a[i].name;
                 var value = a[i].value;
                 if (!this.attribs[name]) {
                     this.attribs[name] = [];
+                }
+                if (!value) {
+                    value = node;
                 }
                 this.attribs[name].push(value);
             }

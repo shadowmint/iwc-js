@@ -1,11 +1,8 @@
 /** Perform a shallow clone of a dictionary */
-export function clone(a, ref:any = null):any {
+export function clone(a):any {
     var rtn:any = {};
     for (var key in a) {
         rtn[key] = a[key];
-    }
-    for (var key in ref) {
-        rtn[key] = ref[key];
     }
     return JSON.parse(JSON.stringify(rtn));
 }

@@ -15,11 +15,6 @@ export class Walk {
     public walk():Walk {
         this.attribs = {};
         this.each((n:Node) => { this.data(n); });
-        for (var key in this.attribs) {
-            if (this.attribs[key].length == 1) {
-                this.attribs[key] = this.attribs[key][0];
-            }
-        }
         return this;
     }
 
@@ -39,12 +34,21 @@ export class Walk {
     public data(node:Node):any[] {
         var rtn:any[] = [];
         if (node.attributes) {
-            var a = [].filter.call(node.attributes, function(at) { return /^data-/.test(at.name); });
+            var a = [];
+            for (var i = 0; i < node.attributes.length; ++i) {
+                var at = node.attributes[i];
+                if (/^data-/.test(at.name)) {
+                    a.push(at);
+                }
+            }
             for (var i = 0; i < a.length; ++i) {
                 var name = a[i].name;
                 var value = a[i].value;
                 if (!this.attribs[name]) {
                     this.attribs[name] = [];
+                }
+                if (!value) {
+                    value = node;
                 }
                 this.attribs[name].push(value);
             }

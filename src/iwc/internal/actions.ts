@@ -119,10 +119,10 @@ function load_component(c:cmp.Component):void {
 
                 // Generate a unique copy of the model & view
                 var model = clone.clone(c.model);
-                var view = clone.clone(c.view, data);
+                var view = clone.clone(c.view);
 
                 // Populate view & invoke instance handler
-                var instance = new cmp.Instance(target, c, model, view);
+                var instance = new cmp.Instance(target, c, model, view, data);
                 var ref = new cmp.Ref(instance);
 
                 // Preload, if any, on the original content

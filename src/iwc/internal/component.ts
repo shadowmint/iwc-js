@@ -89,11 +89,12 @@ export class Instance {
   private _state:any[] = [];
 
   /** Create a new instance of this component */
-  public constructor(root:HTMLElement, component:Component, model:any, view:any) {
+  public constructor(root:HTMLElement, component:Component, model:any, view:any, data:any) {
     this.component = component;
     this.root = root;
     this.model = model;
     this.view = view;
+    this.data = data;
     this.api = component.api();
     this.id = component.next_id;
     this.root['data-component'] = this.id;
