@@ -102,57 +102,88 @@ function update_component(instance) {
     }
 }
 
+/** Walk up the chain of parents for an object */
+function inDom(target) {
+    var tmp = target;
+    while (tmp) {
+        tmp = tmp.parentNode;
+        if (tmp == document) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** Remove old components */
+function prune_component(c) {
+    for (var key in c.instances) {
+        var root = c.instances[key].root;
+        if (!inDom(root)) {
+            delete c.instances[key];
+        }
+    }
+}
+
 /** Load all instances of a single component */
 function load_component(c) {
-    if (!c.loaded) {
-        async.async(function () {
-            // Inject stylesheet
+    async.async(function () {
+        // Inject stylesheet only the first time.
+        if (!c.loaded) {
             styles.appendStyleSheet(c.styles);
+        }
 
-            // Load components
-            var targets = c.targets();
-            for (var i = 0; i < targets.length; ++i) {
-                var target = targets[i];
+        // Filter components to ready ones and discard old ones
+        prune_component(c);
+        var all = c.targets();
+        var targets = [];
+        for (var i = 0; i < all.length; ++i) {
+            var id = all[i]['data-component'];
+            if (!id) {
+                targets.push(all[i]);
+            }
+        }
 
-                // Parse DOM node for component and generate template state
-                var data = new walker.Walk(target).walk().attribs;
+        for (var i = 0; i < targets.length; ++i) {
+            var target = targets[i];
 
-                // Generate a unique copy of the model & view
-                var model = clone.clone(c.model);
-                var view = clone.clone(c.view);
+            // Parse DOM node for component and generate template state
+            var data = new walker.Walk(target).walk().attribs;
 
-                // Populate view & invoke instance handler
-                var instance = new cmp.Instance(target, c, model, view, data);
-                var ref = new cmp.Ref(instance);
+            // Generate a unique copy of the model & view
+            var model = clone.clone(c.model);
+            var view = clone.clone(c.view);
 
-                // Preload, if any, on the original content
-                if (c.preload) {
-                    c.preload(ref);
-                }
+            // Populate view & invoke instance handler
+            var instance = new cmp.Instance(target, c, model, view, data);
+            var ref = new cmp.Ref(instance);
 
-                // Render template & replace DOM content
-                var raw = !c.template ? null : c.template({
-                    data: data,
-                    model: model,
-                    view: view
-                });
-
-                // Populate if template worked
-                if (raw != null) {
-                    instance.root.innerHTML = raw;
-                }
-
-                // Invoke instance if any
-                if (c.instance) {
-                    c.instance(ref);
-                }
-                ref.update();
+            // Preload, if any, on the original content
+            if (c.preload) {
+                c.preload(ref);
             }
 
-            // Ready now!
-            c.loaded = true;
-        });
-    }
+            // Render template & replace DOM content
+            var raw = !c.template ? null : c.template({
+                data: data,
+                model: model,
+                view: view
+            });
+
+            // Populate if template worked
+            if (raw != null) {
+                instance.root.innerHTML = raw;
+            }
+
+            // Invoke instance if any
+            if (c.instance) {
+                c.instance(ref);
+            }
+            ref.update();
+        }
+
+        // Ready now!
+        c.loaded = true;
+    });
 }
 //# sourceMappingURL=actions.js.map
 
