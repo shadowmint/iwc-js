@@ -49,14 +49,15 @@ function register_component(def) {
 exports.register_component = register_component;
 
 /** Deferred component loading */
-function load_components() {
+function load_components(root) {
+    if (typeof root === "undefined") { root = null; }
     if (_loading != null) {
         clearTimeout(_loading);
     }
     _loading = setTimeout(function () {
         _loading = null;
         for (var i = 0; i < _components.length; ++i) {
-            load_component(_components[i]);
+            load_component(_components[i], root);
         }
     }, 100);
 }
@@ -125,7 +126,7 @@ function prune_component(c) {
 }
 
 /** Load all instances of a single component */
-function load_component(c) {
+function load_component(c, root) {
     async.async(function () {
         // Inject stylesheet only the first time.
         if (!c.loaded) {
@@ -134,7 +135,8 @@ function load_component(c) {
 
         // Filter components to ready ones and discard old ones
         prune_component(c);
-        var all = c.targets();
+        root = root ? root : document;
+        var all = c.targets(root);
         var targets = [];
         for (var i = 0; i < all.length; ++i) {
             var id = all[i]['data-component'];
@@ -540,9 +542,16 @@ var actions = require('./internal/actions');
     }
     iwc.component = component;
 
-    /** Load all components all over again */
-    function load() {
-        actions.load_components();
+    /**
+    * Load all components all over again.
+    * If the root element is supplied, the component should only
+    * look through any child elements of that target for new
+    * components to load. By default the document is passed.
+    * @param root Root node to search if any.
+    */
+    function load(root) {
+        if (typeof root === "undefined") { root = null; }
+        actions.load_components(root);
     }
     iwc.load = load;
 
@@ -561,7 +570,7 @@ var actions = require('./internal/actions');
         };
 
         /** Return elements */
-        Base.prototype.targets = function () {
+        Base.prototype.targets = function (root) {
             return [];
         };
 
@@ -608,8 +617,8 @@ var actions = require('./internal/actions');
                 api: function () {
                     return _this.api();
                 },
-                targets: function () {
-                    return _this.targets();
+                targets: function (root) {
+                    return _this.targets(root);
                 },
                 template: function (data) {
                     return _this.template(data);

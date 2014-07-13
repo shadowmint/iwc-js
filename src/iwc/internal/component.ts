@@ -148,7 +148,7 @@ export module callbacks {
   export interface Change { (ref:Ref):void; }
 
   /** Returns a list of component elements to expand */
-  export interface Targets { ():HTMLElement[]; }
+  export interface Targets { (root:Node):HTMLElement[]; }
 
   /** Generate a component layout from a state model */
   export interface Template { (data:any):string; }

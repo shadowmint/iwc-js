@@ -14,9 +14,15 @@ export module iwc {
         actions.register_component(component);
     }
 
-    /** Load all components all over again */
-    export function load():void {
-        actions.load_components();
+    /**
+     * Load all components all over again.
+     * If the root element is supplied, the component should only
+     * look through any child elements of that target for new
+     * components to load. By default the document is passed.
+     * @param root Root node to search if any.
+     */
+    export function load(root:Node = null):void {
+        actions.load_components(root);
     }
 
     /** Interface base */
@@ -47,7 +53,7 @@ export module iwc {
         }
 
         /** Return elements */
-        public targets():HTMLElement[] {
+        public targets(root:Node):HTMLElement[] {
             return [];
         }
 
@@ -93,8 +99,8 @@ export module iwc {
                 api: ():any => {
                     return this.api();
                 },
-                targets: ():HTMLElement[] => {
-                    return this.targets();
+                targets: (root):HTMLElement[] => {
+                    return this.targets(root);
                 },
                 template: (data:any) => {
                     return this.template(data);

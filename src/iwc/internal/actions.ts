@@ -46,14 +46,14 @@ export function register_component(def:cmp.Component):void {
 }
 
 /** Deferred component loading */
-export function load_components():void {
+export function load_components(root:Node = null):void {
   if (_loading != null) {
     clearTimeout(_loading);
   }
   _loading = setTimeout(() => {
     _loading = null;
     for (var i = 0; i < _components.length; ++i) {
-      load_component(_components[i]);
+      load_component(_components[i], root);
     }
   }, 100);
 }
@@ -124,7 +124,7 @@ function prune_component(c:cmp.Component):void {
 }
 
 /** Load all instances of a single component */
-function load_component(c:cmp.Component):void {
+function load_component(c:cmp.Component, root:Node):void {
   async.async(() => {
 
     // Inject stylesheet only the first time.
@@ -134,7 +134,8 @@ function load_component(c:cmp.Component):void {
 
     // Filter components to ready ones and discard old ones
     prune_component(c);
-    var all = c.targets();
+    root = root ? root : document;
+    var all = c.targets(root);
     var targets = [];
     for (var i = 0; i < all.length; ++i) {
       var id = all[i]['data-component'];
