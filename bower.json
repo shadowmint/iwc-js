@@ -1,6 +1,8 @@
 {
   "name": "iwc-js",
-  "version": "0.1.3",
+  "version": "0.1.4",
+  "main": "dist/iwc.js",
+  "ignore": ["demo", "src"]
   "devDependencies": {
     "requirejs": "",
     "handlebars": "~1.3.0",
