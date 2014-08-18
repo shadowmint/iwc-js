@@ -89,6 +89,19 @@ export module iwc {
         public preload(ref:cmp.Ref):void {
         }
 
+        /** Agregate the data in a reference */
+        public agregate(data:any) {
+          var rtn = [];
+          for (var key in data) {
+            var bit = key.split('-')[1];
+            for (var i = 0; i < data[key].length; ++i) {
+              if (!rtn[i]) { rtn.push({}); }
+              rtn[i][bit] = data[key][i];
+            }
+          }
+          return rtn;
+        }
+
         /** Export a definition for this instance */
         public def():cmp.ComponentDef {
             return {
