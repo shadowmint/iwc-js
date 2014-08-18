@@ -606,6 +606,21 @@ var actions = require('./internal/actions');
         Base.prototype.preload = function (ref) {
         };
 
+        /** Agregate the data in a reference */
+        Base.prototype.agregate = function (data) {
+            var rtn = [];
+            for (var key in data) {
+                var bit = key.split('-')[1];
+                for (var i = 0; i < data[key].length; ++i) {
+                    if (!rtn[i]) {
+                        rtn.push({});
+                    }
+                    rtn[i][bit] = data[key][i];
+                }
+            }
+            return rtn;
+        };
+
         /** Export a definition for this instance */
         Base.prototype.def = function () {
             var _this = this;
