@@ -64,8 +64,6 @@ export class Components {
         var action = new actions.Actions();
         action.push({ node: root , factory: null });
         action.items = (root:any):any[] => {
-            console.log("The root passed to items was: " + JSON.stringify(root));
-            console.log("We have " + this._factory.length + " factories to look at");
             var rtn:any[] = [];
             for (var i = 0; i < this._factory.length; ++i) {
                 var list = this._factory[i].query(root.node);
@@ -84,7 +82,7 @@ export class Components {
                 this._instances.push(instance);
                 this._impl.injectContent(root.node, instance.content());
                 async.async(() => {
-                    console.log("After inject, the result was: " + JSON.stringify(root));
+                    instance.init();
                     loaded(root);
                 });
             }
@@ -118,11 +116,8 @@ export class Components {
     /** Remove a component type */
     public drop(factory:iwc.iwc.Factory):void {
         var index = this._indexOf(factory, this._factory);
-        console.log("Found index for value: " + this._indexOf(factory, this._factory));
         if (index != -1) {
-            console.log("Drop");
             this._factory.splice(index, 1);
-            console.log(this._factory);
         }
     }
 

@@ -6,6 +6,7 @@ class TestImpl implements c.ComponentsImpl {
 
     public stylesheets:number = 0;
     public instances:number = 0;
+    public inits:number = 0;
     public injected:number = 0;
     public drops:number = 0;
     public data:any = null;
@@ -27,14 +28,11 @@ class TestImpl implements c.ComponentsImpl {
     injectContent(root:any, content:any):void {
         if (content) {
             this.injected += 1;
-            console.log("\n\n");
-            console.log(JSON.stringify(root));
-            console.log(content);
             root.value = content;
-            console.log("Updated to: " + JSON.stringify(root));
-            console.log("\n");
         }
-        root.value = '';
+        else {
+          root.value = '';
+        }
     }
 
     equivRoot(r1:any, r2:any):boolean {
@@ -55,7 +53,7 @@ class Cmp extends iwc.iwc.Base {
     }
 
     init() {
-        this.impl.instances += 1;
+        this.impl.inits += 1;
     }
 
     content():any {
@@ -92,25 +90,24 @@ class Factory implements iwc.iwc.Factory {
         if (this.id != null) {
             cmp.inner = Factory.content_map[this.id];
         }
+        this.impl.instances += 1;
         return cmp;
     }
 
     public query(root:any):any[] {
-        console.log("Factory " + this.id + " invoked with root: " + JSON.stringify(root));
-        if ((root.value) && (this.id != null)) {
-            console.log("looking for: " + this.id);
+        if ((root.value != null) && (this.id != null)) {
             var items = (<string> root.value).split('');
             var rtn = [];
             for (var i = 0; i < items.length; ++i) {
                 if (items[i] == this.id) {
-                    console.log('match: ' + items[i]);
                     rtn.push({value: items[i]});
                 }
             }
-            console.log("Matching root nodes were: " + rtn);
             return rtn;
         }
-        return this.roots;
+        var r = this.roots;
+        this.roots = [];
+        return r;
     }
 }
 
@@ -135,7 +132,7 @@ function tmp_group() {
     return rtn;
 }
 
-/*export function test_create(t) {
+export function test_create(t) {
     var i = tmp();
     t.ok(i.factory);
     t.ok(i.components);
@@ -166,18 +163,6 @@ export function test_stylesheets(t) {
     t.done();
 }
 
-export function test_load(t) {
-    var i = tmp();
-    i.factory.roots = [1, 2, 3];
-    i.components.add(i.factory);
-    i.components.load("Value", () => {
-        console.log("DONE");
-        t.equals(i.impl.injected, 3);
-        t.equals(i.impl.instances, 3);
-        t.done();
-    });
-}*/
-
 export function test_recursive_load(t) {
     var i = tmp_group();
     i.factory[0].id = '0';
@@ -186,8 +171,20 @@ export function test_recursive_load(t) {
     Factory.content_map['0'] = '2';
     Factory.content_map['2'] = '3';
     i.components.load({value: "0110"}, () => {
-        console.log(i);
-        t.equals(i.impl.instances, 4);
+        t.equals(i.impl.instances, 8);
+        t.equals(i.impl.inits, 8);
+        t.equals(i.impl.injected, 4);
+        t.done();
+    });
+}
+
+export function test_load(t) {
+    var i = tmp();
+    i.factory.roots = [1, 2, 3];
+    i.components.add(i.factory);
+    i.components.load("Value", () => {
+        t.equals(i.impl.inits, 3);
+        t.equals(i.impl.instances, 3);
         t.done();
     });
 }

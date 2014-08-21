@@ -31,13 +31,10 @@ export class Actions {
      * @param item A callback to load a single item and then invoke the callback with a new root node.
      */
     public process(next:{():void}):void {
-        console.log("--------------------------> Entered process");
         if (this.roots.length) {
             var waiting = 0;
             var root = this.roots.pop();
-            console.log('Processing root node: ' + root);
             var found = this.items(root);
-            console.log('Records returned: ' + found);
             if (found.length == 0) {
                 next();
             }
@@ -45,7 +42,6 @@ export class Actions {
                 var maybe_done = () => {
                     waiting -= 1;
                     if (waiting <= 0) {
-                        console.log('Done with local, new stack is: ' + this.roots);
                         next();
                     }
                 };
@@ -53,7 +49,6 @@ export class Actions {
                     waiting += 1;
                     this.item(found[i], (root) => {
                         this.roots.push(root);
-                        console.log('New root node added: ' + root);
                         maybe_done();
                     });
                 }

@@ -1,7 +1,7 @@
 import chain = require('./action_chain');
 import async = require('./async');
 
-/*export function test_create(t) {
+export function test_create(t) {
     var instance = new chain.Actions();
     t.ok(instance);
     t.done();
@@ -25,7 +25,6 @@ export function test_recursive_command_chain(t) {
 
     var item = (root:any, loaded:{(root:any):void}) => {
         total += 1;
-        console.log('Request to process node instance (' + total + ') of: ' + root.value);
         switch (root.value) {
             case '00':
                 root.value = '01 01';
@@ -55,4 +54,4 @@ export function test_recursive_command_chain(t) {
         t.equals(total, 25);
         t.done();
     });
-}*/
+}
