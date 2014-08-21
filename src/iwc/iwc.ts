@@ -124,6 +124,11 @@ export module iwc {
         components.prune();
     }
 
+    /** Reload components from the given root node */
+    export function load(root:any = null, done:{():void} = null):void {
+        components.load(root, done);
+    }
+
     /** The component register */
     export var components:cmp.Components = null;
 }

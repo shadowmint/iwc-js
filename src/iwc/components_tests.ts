@@ -188,3 +188,17 @@ export function test_load(t) {
         t.done();
     });
 }
+
+export function test_prune(t) {
+    var i = tmp();
+    i.factory.roots = [1, 2, 3];
+    i.components.add(i.factory);
+    i.components.load("Value", () => {
+      i.components.prune();
+      t.equals(i.impl.inits, 3);
+      t.equals(i.impl.drops, 3);
+      t.done();
+    });
+}
+
+// TODO: Test data attribute

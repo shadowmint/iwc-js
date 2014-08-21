@@ -302,6 +302,19 @@ function test_load(t) {
     });
 }
 exports.test_load = test_load;
+
+function test_prune(t) {
+    var i = tmp();
+    i.factory.roots = [1, 2, 3];
+    i.components.add(i.factory);
+    i.components.load("Value", function () {
+        i.components.prune();
+        t.equals(i.impl.inits, 3);
+        t.equals(i.impl.drops, 3);
+        t.done();
+    });
+}
+exports.test_prune = test_prune;
 //# sourceMappingURL=components_tests.js.map
 
 },{"./components":1,"./iwc":3}],3:[function(require,module,exports){
@@ -354,6 +367,14 @@ exports.test_load = test_load;
         iwc.components.prune();
     }
     iwc.prune = prune;
+
+    /** Reload components from the given root node */
+    function load(root, done) {
+        if (typeof root === "undefined") { root = null; }
+        if (typeof done === "undefined") { done = null; }
+        iwc.components.load(root, done);
+    }
+    iwc.load = load;
 
     /** The component register */
     iwc.components = null;
