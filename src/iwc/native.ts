@@ -1,40 +1,63 @@
 import c = require('./components');
+import ss = require('./utils/stylesheet');
+import async = require('./utils/async');
 
 /** Native dom bindings for the components object api */
-class Native implements c.ComponentsImpl {
+export class Native implements c.ComponentsImpl {
 
-    public stylesheets:number = 0;
-    public instances:number = 0;
-    public inits:number = 0;
-    public injected:number = 0;
-    public drops:number = 0;
-    public data:any = null;
+    /** Uid source */
+    private static id:number = 0;
 
-    shouldPrune(root:any):boolean {
-        return true;
-    }
-
+    /** Async inject a new stylesheet tag */
     injectStyles(styles:string):void {
         if (styles) {
-            this.stylesheets += 1;
+          ss.appendStyleSheet(styles);
         }
     }
 
     collectData(root:any):any {
-        return this.data;
+        // TODO
+        return {};
     }
 
-    injectContent(root:any, content:any):void {
+    shouldPrune(root:any):boolean {
+        // TODO
+        return true;
+    }
+
+    /** Insert node as root or replace root with html; attach uid. */
+    injectContent(root:any, content:any, done:{(root:any):void}):void {
         if (content) {
-            this.injected += 1;
-            root.value = content;
+          if (typeof(content) == "string") {
+            root.innerHTML = content;
+            async.async(() => {
+              done(root.children[0]);
+            });
+          }
+          else {
+              root.innerHTML = "";
+              async.async(() => {
+                try {
+                  root.appendChild(content);
+                  done(content);
+                }
+                catch(e) {
+                  throw new Error("Invalid node could not be injected into the DOM");
+                }
+              });
+          }
         }
-        else {
-          root.value = '';
-        }
+        root['data-uid'] = this._uid();
     }
 
+    /** Use UID's to compare node instances */
     equivRoot(r1:any, r2:any):boolean {
-        return r1 === r2;
+        return r1['data-uid'] === r2['data-uid'];
+    }
+
+    /** Generate a unique id */
+    private _uid():number {
+      Native.id += 1;
+      return Native.id;
     }
 }

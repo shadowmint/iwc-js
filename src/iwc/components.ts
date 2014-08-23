@@ -19,10 +19,10 @@ export interface ComponentsImpl {
     collectData(root:any):any;
 
     /**
-     * Inject the content into the given root node
+     * Inject the content into the given root node and return the new root node.
      * This operation is invoked async.
      */
-    injectContent(root:any, content:any):void;
+    injectContent(root:any, content:any, done:{(root:any):void}):void;
 
     /**
      * Compare two root nodes for equivalence.
@@ -74,20 +74,19 @@ export class Components {
             return rtn;
         };
         action.item = (root:any, loaded:{(root:any):void}) => {
-            if (root.factory) {
+            if ((root.factory) && (root.node)) {
                 var instance = root.factory.factory();
                 instance.root = root.node;
                 instance.data = this._impl.collectData(root.node);
                 instance.factory = root.factory;
                 this._instances.push(instance);
-                this._impl.injectContent(root.node, instance.content());
-                async.async(() => {
+                this._impl.injectContent(root.node, instance.content(), (root) => {
                     instance.init();
-                    loaded(root);
+                    loaded({ node: root, factory: null });
                 });
             }
             else {
-                loaded(root);
+                loaded(null);
             }
         };
         action.all(done);

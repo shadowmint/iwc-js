@@ -32,13 +32,13 @@ export class Actions {
      */
     public process(next:{():void}):void {
         if (this.roots.length) {
-            var waiting = 0;
             var root = this.roots.pop();
             var found = this.items(root);
             if (found.length == 0) {
                 next();
             }
             else {
+                var waiting = found.length;
                 var maybe_done = () => {
                     waiting -= 1;
                     if (waiting <= 0) {
@@ -46,9 +46,10 @@ export class Actions {
                     }
                 };
                 for (var i = 0; i < found.length; ++i) {
-                    waiting += 1;
                     this.item(found[i], (root) => {
-                        this.roots.push(root);
+                        if (root != null) {
+                          this.roots.push(root);
+                        }
                         maybe_done();
                     });
                 }

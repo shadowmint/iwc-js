@@ -1,6 +1,36 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+
+/** A default implementation to extend */
+var Base = (function () {
+    function Base() {
+    }
+    Base.prototype.content = function () {
+        return null;
+    };
+
+    Base.prototype.init = function () {
+    };
+
+    Base.prototype.api = function () {
+        return this;
+    };
+
+    Base.prototype.drop = function () {
+        this.root = null;
+        this.data = null;
+    };
+
+    Base.prototype.valid = function () {
+        return null;
+    };
+    return Base;
+})();
+exports.Base = Base;
+//# sourceMappingURL=component.js.map
+
+},{}],2:[function(require,module,exports){
 var actions = require('./utils/action_chain');
-var async = require('./utils/async');
 
 
 /** Component registry */
@@ -42,19 +72,18 @@ var Components = (function () {
             return rtn;
         };
         action.item = function (root, loaded) {
-            if (root.factory) {
+            if ((root.factory) && (root.node)) {
                 var instance = root.factory.factory();
                 instance.root = root.node;
                 instance.data = _this._impl.collectData(root.node);
                 instance.factory = root.factory;
                 _this._instances.push(instance);
-                _this._impl.injectContent(root.node, instance.content());
-                async.async(function () {
+                _this._impl.injectContent(root.node, instance.content(), function (root) {
                     instance.init();
-                    loaded(root);
+                    loaded({ node: root, factory: null });
                 });
             } else {
-                loaded(root);
+                loaded(null);
             }
         };
         action.all(done);
@@ -105,7 +134,7 @@ var Components = (function () {
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
 
-},{"./utils/action_chain":6,"./utils/async":8}],2:[function(require,module,exports){
+},{"./utils/action_chain":7}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -113,7 +142,7 @@ var __extends = this.__extends || function (d, b) {
     d.prototype = new __();
 };
 var c = require('./components');
-var iwc = require('./iwc');
+var cmp = require('./component');
 
 // test impl
 var TestImpl = (function () {
@@ -139,13 +168,14 @@ var TestImpl = (function () {
         return this.data;
     };
 
-    TestImpl.prototype.injectContent = function (root, content) {
+    TestImpl.prototype.injectContent = function (root, content, done) {
         if (content) {
             this.injected += 1;
             root.value = content;
         } else {
             root.value = '';
         }
+        done(root);
     };
 
     TestImpl.prototype.equivRoot = function (r1, r2) {
@@ -179,7 +209,7 @@ var Cmp = (function (_super) {
         this.impl.drops += 1;
     };
     return Cmp;
-})(iwc.iwc.Base);
+})(cmp.Base);
 
 // test component factory
 var Factory = (function () {
@@ -286,6 +316,7 @@ function test_recursive_load(t) {
         t.equals(i.impl.instances, 8);
         t.equals(i.impl.inits, 8);
         t.equals(i.impl.injected, 4);
+        console.log("COMPLETED 3");
         t.done();
     });
 }
@@ -298,6 +329,7 @@ function test_load(t) {
     i.components.load("Value", function () {
         t.equals(i.impl.inits, 3);
         t.equals(i.impl.instances, 3);
+        console.log("COMPLETED 1");
         t.done();
     });
 }
@@ -311,43 +343,37 @@ function test_prune(t) {
         i.components.prune();
         t.equals(i.impl.inits, 3);
         t.equals(i.impl.drops, 3);
+        console.log("COMPLETED 2");
         t.done();
     });
 }
 exports.test_prune = test_prune;
+// TODO: Test data attribute
 //# sourceMappingURL=components_tests.js.map
 
-},{"./components":1,"./iwc":3}],3:[function(require,module,exports){
+},{"./component":1,"./components":2}],4:[function(require,module,exports){
+var __extends = this.__extends || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    __.prototype = b.prototype;
+    d.prototype = new __();
+};
+var cmps = require('./components');
+var cmp = require('./component');
+var native = require('./native');
 (function (iwc) {
     
 
     
 
     /** A default implementation to extend */
-    var Base = (function () {
+    var Base = (function (_super) {
+        __extends(Base, _super);
         function Base() {
+            _super.apply(this, arguments);
         }
-        Base.prototype.content = function () {
-            return null;
-        };
-
-        Base.prototype.init = function () {
-        };
-
-        Base.prototype.api = function () {
-            return this;
-        };
-
-        Base.prototype.drop = function () {
-            this.root = null;
-            this.data = null;
-        };
-
-        Base.prototype.valid = function () {
-            return null;
-        };
         return Base;
-    })();
+    })(cmp.Base);
     iwc.Base = Base;
 
     /** Create a new component */
@@ -377,7 +403,8 @@ exports.test_prune = test_prune;
     iwc.load = load;
 
     /** The component register */
-    iwc.components = null;
+    var impl = new native.Native();
+    iwc.components = new cmps.Components(impl);
 })(exports.iwc || (exports.iwc = {}));
 var iwc = exports.iwc;
 
@@ -389,7 +416,7 @@ try  {
 }
 //# sourceMappingURL=iwc.js.map
 
-},{}],4:[function(require,module,exports){
+},{"./component":1,"./components":2,"./native":6}],5:[function(require,module,exports){
 function test_register(t) {
     t.ok(true);
     t.done();
@@ -397,48 +424,71 @@ function test_register(t) {
 exports.test_register = test_register;
 //# sourceMappingURL=iwc_tests.js.map
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+var ss = require('./utils/stylesheet');
+var async = require('./utils/async');
+
 /** Native dom bindings for the components object api */
 var Native = (function () {
     function Native() {
-        this.stylesheets = 0;
-        this.instances = 0;
-        this.inits = 0;
-        this.injected = 0;
-        this.drops = 0;
-        this.data = null;
     }
-    Native.prototype.shouldPrune = function (root) {
-        return true;
-    };
-
+    /** Async inject a new stylesheet tag */
     Native.prototype.injectStyles = function (styles) {
         if (styles) {
-            this.stylesheets += 1;
+            ss.appendStyleSheet(styles);
         }
     };
 
     Native.prototype.collectData = function (root) {
-        return this.data;
+        // TODO
+        return {};
     };
 
-    Native.prototype.injectContent = function (root, content) {
+    Native.prototype.shouldPrune = function (root) {
+        // TODO
+        return true;
+    };
+
+    /** Insert node as root or replace root with html; attach uid. */
+    Native.prototype.injectContent = function (root, content, done) {
         if (content) {
-            this.injected += 1;
-            root.value = content;
-        } else {
-            root.value = '';
+            if (typeof (content) == "string") {
+                root.innerHTML = content;
+                async.async(function () {
+                    done(root.children[0]);
+                });
+            } else {
+                root.innerHTML = "";
+                async.async(function () {
+                    try  {
+                        root.appendChild(content);
+                        done(content);
+                    } catch (e) {
+                        throw new Error("Invalid node could not be injected into the DOM");
+                    }
+                });
+            }
         }
+        root['data-uid'] = this._uid();
     };
 
+    /** Use UID's to compare node instances */
     Native.prototype.equivRoot = function (r1, r2) {
-        return r1 === r2;
+        return r1['data-uid'] === r2['data-uid'];
     };
+
+    /** Generate a unique id */
+    Native.prototype._uid = function () {
+        Native.id += 1;
+        return Native.id;
+    };
+    Native.id = 0;
     return Native;
 })();
+exports.Native = Native;
 //# sourceMappingURL=native.js.map
 
-},{}],6:[function(require,module,exports){
+},{"./utils/async":9,"./utils/stylesheet":10}],7:[function(require,module,exports){
 var async = require("./async");
 
 /** Helper to process recursive chains */
@@ -462,12 +512,12 @@ var Actions = (function () {
     Actions.prototype.process = function (next) {
         var _this = this;
         if (this.roots.length) {
-            var waiting = 0;
             var root = this.roots.pop();
             var found = this.items(root);
             if (found.length == 0) {
                 next();
             } else {
+                var waiting = found.length;
                 var maybe_done = function () {
                     waiting -= 1;
                     if (waiting <= 0) {
@@ -475,9 +525,10 @@ var Actions = (function () {
                     }
                 };
                 for (var i = 0; i < found.length; ++i) {
-                    waiting += 1;
                     this.item(found[i], function (root) {
-                        _this.roots.push(root);
+                        if (root != null) {
+                            _this.roots.push(root);
+                        }
                         maybe_done();
                     });
                 }
@@ -505,7 +556,7 @@ var Actions = (function () {
 exports.Actions = Actions;
 //# sourceMappingURL=action_chain.js.map
 
-},{"./async":8}],7:[function(require,module,exports){
+},{"./async":9}],8:[function(require,module,exports){
 var chain = require('./action_chain');
 var async = require('./async');
 
@@ -568,7 +619,7 @@ function test_recursive_command_chain(t) {
 exports.test_recursive_command_chain = test_recursive_command_chain;
 //# sourceMappingURL=action_chain_tests.js.map
 
-},{"./action_chain":6,"./async":8}],8:[function(require,module,exports){
+},{"./action_chain":7,"./async":9}],9:[function(require,module,exports){
 /** Invoke an action async */
 function async(action) {
     setTimeout(function () {
@@ -578,7 +629,7 @@ function async(action) {
 exports.async = async;
 //# sourceMappingURL=async.js.map
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
@@ -715,7 +766,7 @@ function replaceStyleSheet(node, css, callback) {
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /** Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
@@ -773,4 +824,4 @@ var Walk = (function () {
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
 
-},{}]},{},[1,2,3,4,5,6,7,8,9,10]);
+},{}]},{},[1,2,3,4,5,6,7,8,9,10,11]);

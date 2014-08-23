@@ -1,5 +1,5 @@
 import c = require('./components');
-import iwc = require('./iwc');
+import cmp = require('./component');
 
 // test impl
 class TestImpl implements c.ComponentsImpl {
@@ -25,7 +25,7 @@ class TestImpl implements c.ComponentsImpl {
         return this.data;
     }
 
-    injectContent(root:any, content:any):void {
+    injectContent(root:any, content:any, done:{(root:any):void}):void {
         if (content) {
             this.injected += 1;
             root.value = content;
@@ -33,6 +33,7 @@ class TestImpl implements c.ComponentsImpl {
         else {
           root.value = '';
         }
+        done(root);
     }
 
     equivRoot(r1:any, r2:any):boolean {
@@ -41,7 +42,7 @@ class TestImpl implements c.ComponentsImpl {
 }
 
 // test component type
-class Cmp extends iwc.iwc.Base {
+class Cmp extends cmp.Base {
 
     is_valid:any = null;
     inner:string = null;
@@ -70,7 +71,7 @@ class Cmp extends iwc.iwc.Base {
 }
 
 // test component factory
-class Factory implements iwc.iwc.Factory {
+class Factory implements cmp.Factory {
 
     roots:any[];
     stylesheet:string;
@@ -85,7 +86,7 @@ class Factory implements iwc.iwc.Factory {
         this.stylesheet = stylesheet;
     }
 
-    public factory():iwc.iwc.Component {
+    public factory():cmp.Component {
         var cmp = new Cmp(this.impl);
         if (this.id != null) {
             cmp.inner = Factory.content_map[this.id];
@@ -174,6 +175,7 @@ export function test_recursive_load(t) {
         t.equals(i.impl.instances, 8);
         t.equals(i.impl.inits, 8);
         t.equals(i.impl.injected, 4);
+        console.log("COMPLETED 3");
         t.done();
     });
 }
@@ -185,6 +187,7 @@ export function test_load(t) {
     i.components.load("Value", () => {
         t.equals(i.impl.inits, 3);
         t.equals(i.impl.instances, 3);
+        console.log("COMPLETED 1");
         t.done();
     });
 }
@@ -197,6 +200,7 @@ export function test_prune(t) {
       i.components.prune();
       t.equals(i.impl.inits, 3);
       t.equals(i.impl.drops, 3);
+        console.log("COMPLETED 2");
       t.done();
     });
 }
