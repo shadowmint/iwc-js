@@ -1,6 +1,7 @@
 import c = require('./components');
 import ss = require('./utils/stylesheet');
 import async = require('./utils/async');
+import walk = require('./utils/walker');
 
 /** Native dom bindings for the components object api */
 export class Native implements c.ComponentsImpl {

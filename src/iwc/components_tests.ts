@@ -175,7 +175,6 @@ export function test_recursive_load(t) {
         t.equals(i.impl.instances, 8);
         t.equals(i.impl.inits, 8);
         t.equals(i.impl.injected, 4);
-        console.log("COMPLETED 3");
         t.done();
     });
 }
@@ -187,7 +186,6 @@ export function test_load(t) {
     i.components.load("Value", () => {
         t.equals(i.impl.inits, 3);
         t.equals(i.impl.instances, 3);
-        console.log("COMPLETED 1");
         t.done();
     });
 }
@@ -200,9 +198,31 @@ export function test_prune(t) {
       i.components.prune();
       t.equals(i.impl.inits, 3);
       t.equals(i.impl.drops, 3);
-        console.log("COMPLETED 2");
       t.done();
     });
 }
 
-// TODO: Test data attribute
+export function test_data(t) {
+  var i = tmp();
+  i.factory.roots = [1];
+  i.impl.data = {
+    'data-foo': ['one', 'two', 'three'],
+    'data-bar': ['one'],
+    'data-foobar': ['1', '2', '3', '4', '5']
+  };
+  i.components.add(i.factory);
+  i.components.load("Value", () => {
+      var instance = i.components.query(1);
+      t.equals(instance.data.foo.length, 3);
+      t.equals(instance.data.bar.length, 1);
+      t.equals(instance.data.foobar.length, 5);
+      t.equals(instance.data._all.length, 5);
+      t.equals(instance.data._all[0].foo, 'one');
+      t.equals(instance.data._all[0].bar, 'one');
+      t.equals(instance.data._all[0].foobar, '1');
+      t.equals(instance.data._all[4].foo, undefined);
+      t.equals(instance.data._all[4].bar, undefined);
+      t.equals(instance.data._all[4].foobar, '5');
+      t.done();
+  });
+}

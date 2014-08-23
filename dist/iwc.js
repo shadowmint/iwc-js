@@ -75,7 +75,7 @@ var Components = (function () {
             if ((root.factory) && (root.node)) {
                 var instance = root.factory.factory();
                 instance.root = root.node;
-                instance.data = _this._impl.collectData(root.node);
+                instance.data = _this._data(_this._impl.collectData(root.node));
                 instance.factory = root.factory;
                 _this._instances.push(instance);
                 _this._impl.injectContent(root.node, instance.content(), function (root) {
@@ -97,6 +97,31 @@ var Components = (function () {
             }
         }
         return false;
+    };
+
+    /** Parse data values and combine them */
+    Components.prototype._data = function (data) {
+        var rtn = {};
+        var all = [];
+        for (var key in data) {
+            var name = key.split('data-').length == 2 ? key.split('data-')[1] : null;
+            if (name) {
+                var items = data[key];
+                for (var i = 0; i < items.length; ++i) {
+                    if (!all[i]) {
+                        all[i] = {};
+                    }
+                    var __all = all[i];
+                    if (!rtn[name]) {
+                        rtn[name] = [];
+                    }
+                    rtn[name].push(items[i]);
+                    __all[name] = items[i];
+                }
+            }
+        }
+        rtn['_all'] = all;
+        return rtn;
     };
 
     /** Add a component type */
@@ -129,12 +154,24 @@ var Components = (function () {
         }
         this._instances = instances;
     };
+
+    /** Query an element by root value */
+    Components.prototype.query = function (root) {
+        var rtn = null;
+        for (var i = 0; i < this._instances.length; ++i) {
+            if (this._impl.equivRoot(root, this._instances[i].root)) {
+                rtn = this._instances[i];
+                break;
+            }
+        }
+        return rtn;
+    };
     return Components;
 })();
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
 
-},{"./utils/action_chain":7}],3:[function(require,module,exports){
+},{"./utils/action_chain":6}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -316,7 +353,6 @@ function test_recursive_load(t) {
         t.equals(i.impl.instances, 8);
         t.equals(i.impl.inits, 8);
         t.equals(i.impl.injected, 4);
-        console.log("COMPLETED 3");
         t.done();
     });
 }
@@ -329,7 +365,6 @@ function test_load(t) {
     i.components.load("Value", function () {
         t.equals(i.impl.inits, 3);
         t.equals(i.impl.instances, 3);
-        console.log("COMPLETED 1");
         t.done();
     });
 }
@@ -343,12 +378,36 @@ function test_prune(t) {
         i.components.prune();
         t.equals(i.impl.inits, 3);
         t.equals(i.impl.drops, 3);
-        console.log("COMPLETED 2");
         t.done();
     });
 }
 exports.test_prune = test_prune;
-// TODO: Test data attribute
+
+function test_data(t) {
+    var i = tmp();
+    i.factory.roots = [1];
+    i.impl.data = {
+        'data-foo': ['one', 'two', 'three'],
+        'data-bar': ['one'],
+        'data-foobar': ['1', '2', '3', '4', '5']
+    };
+    i.components.add(i.factory);
+    i.components.load("Value", function () {
+        var instance = i.components.query(1);
+        t.equals(instance.data.foo.length, 3);
+        t.equals(instance.data.bar.length, 1);
+        t.equals(instance.data.foobar.length, 5);
+        t.equals(instance.data._all.length, 5);
+        t.equals(instance.data._all[0].foo, 'one');
+        t.equals(instance.data._all[0].bar, 'one');
+        t.equals(instance.data._all[0].foobar, '1');
+        t.equals(instance.data._all[4].foo, undefined);
+        t.equals(instance.data._all[4].bar, undefined);
+        t.equals(instance.data._all[4].foobar, '5');
+        t.done();
+    });
+}
+exports.test_data = test_data;
 //# sourceMappingURL=components_tests.js.map
 
 },{"./component":1,"./components":2}],4:[function(require,module,exports){
@@ -416,15 +475,7 @@ try  {
 }
 //# sourceMappingURL=iwc.js.map
 
-},{"./component":1,"./components":2,"./native":6}],5:[function(require,module,exports){
-function test_register(t) {
-    t.ok(true);
-    t.done();
-}
-exports.test_register = test_register;
-//# sourceMappingURL=iwc_tests.js.map
-
-},{}],6:[function(require,module,exports){
+},{"./component":1,"./components":2,"./native":5}],5:[function(require,module,exports){
 var ss = require('./utils/stylesheet');
 var async = require('./utils/async');
 
@@ -488,7 +539,7 @@ var Native = (function () {
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
 
-},{"./utils/async":9,"./utils/stylesheet":10}],7:[function(require,module,exports){
+},{"./utils/async":8,"./utils/stylesheet":9}],6:[function(require,module,exports){
 var async = require("./async");
 
 /** Helper to process recursive chains */
@@ -556,7 +607,7 @@ var Actions = (function () {
 exports.Actions = Actions;
 //# sourceMappingURL=action_chain.js.map
 
-},{"./async":9}],8:[function(require,module,exports){
+},{"./async":8}],7:[function(require,module,exports){
 var chain = require('./action_chain');
 var async = require('./async');
 
@@ -619,7 +670,7 @@ function test_recursive_command_chain(t) {
 exports.test_recursive_command_chain = test_recursive_command_chain;
 //# sourceMappingURL=action_chain_tests.js.map
 
-},{"./action_chain":7,"./async":9}],9:[function(require,module,exports){
+},{"./action_chain":6,"./async":8}],8:[function(require,module,exports){
 /** Invoke an action async */
 function async(action) {
     setTimeout(function () {
@@ -629,7 +680,7 @@ function async(action) {
 exports.async = async;
 //# sourceMappingURL=async.js.map
 
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
@@ -766,7 +817,7 @@ function replaceStyleSheet(node, css, callback) {
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
 
-},{}],11:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /** Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
@@ -824,4 +875,4 @@ var Walk = (function () {
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
 
-},{}]},{},[1,2,3,4,5,6,7,8,9,10,11]);
+},{}]},{},[1,2,3,4,5,6,7,8,9,10]);

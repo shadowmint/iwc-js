@@ -1,4 +1,4 @@
-import iwc = require('./iwc');
+import cmp = require('./component');
 import actions = require('./utils/action_chain');
 import async = require('./utils/async');
 declare var document;
@@ -38,10 +38,10 @@ export class Components {
     private _impl:ComponentsImpl;
 
     /** Keep a list of all component factory instances here */
-    private _factory:iwc.iwc.Factory[] = [];
+    private _factory:cmp.Factory[] = [];
 
     /** Keep a list of all component instances here */
-    private _instances:iwc.iwc.Component[] = [];
+    private _instances:cmp.Component[] = [];
 
     constructor(impl:ComponentsImpl) {
         this._impl = impl;
@@ -77,7 +77,7 @@ export class Components {
             if ((root.factory) && (root.node)) {
                 var instance = root.factory.factory();
                 instance.root = root.node;
-                instance.data = this._impl.collectData(root.node);
+                instance.data = this._data(this._impl.collectData(root.node));
                 instance.factory = root.factory;
                 this._instances.push(instance);
                 this._impl.injectContent(root.node, instance.content(), (root) => {
@@ -102,8 +102,28 @@ export class Components {
         return false;
     }
 
+    /** Parse data values and combine them */
+    private _data(data:any):any {
+        var rtn = {};
+        var all = [];
+        for (var key in data) {
+          var name = key.split('data-').length == 2 ? key.split('data-')[1] : null;
+          if (name) {
+            var items = data[key];
+            for (var i = 0; i < items.length; ++i) {
+              if (!all[i]) { all[i] = {}; } var __all = all[i];
+              if (!rtn[name]) { rtn[name] = []; }
+              rtn[name].push(items[i]);
+              __all[name] = items[i];
+            }
+          }
+        }
+        rtn['_all'] = all;
+        return rtn;
+    }
+
     /** Add a component type */
-    public add(factory:iwc.iwc.Factory):void {
+    public add(factory:cmp.Factory):void {
         if (this._indexOf(factory, this._factory) == -1) {
             this._factory.push(factory);
             if (factory.stylesheet) {
@@ -113,7 +133,7 @@ export class Components {
     }
 
     /** Remove a component type */
-    public drop(factory:iwc.iwc.Factory):void {
+    public drop(factory:cmp.Factory):void {
         var index = this._indexOf(factory, this._factory);
         if (index != -1) {
             this._factory.splice(index, 1);
@@ -134,5 +154,17 @@ export class Components {
             }
         }
         this._instances = instances;
+    }
+
+    /** Query an element by root value */
+    public query(root:any):cmp.Component {
+      var rtn:cmp.Component = null;
+      for (var i = 0; i < this._instances.length; ++i) {
+        if (this._impl.equivRoot(root, this._instances[i].root)) {
+          rtn = this._instances[i];
+          break;
+        }
+      }
+      return rtn;
     }
 }
