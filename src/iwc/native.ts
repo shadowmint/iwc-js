@@ -17,8 +17,7 @@ export class Native implements c.ComponentsImpl {
     }
 
     collectData(root:any):any {
-        // TODO
-        return {};
+        return new walk.Walk(root).walk().attribs;
     }
 
     shouldPrune(root:any):boolean {

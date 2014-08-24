@@ -478,6 +478,7 @@ try  {
 },{"./component":1,"./components":2,"./native":5}],5:[function(require,module,exports){
 var ss = require('./utils/stylesheet');
 var async = require('./utils/async');
+var walk = require('./utils/walker');
 
 /** Native dom bindings for the components object api */
 var Native = (function () {
@@ -491,8 +492,7 @@ var Native = (function () {
     };
 
     Native.prototype.collectData = function (root) {
-        // TODO
-        return {};
+        return new walk.Walk(root).walk().attribs;
     };
 
     Native.prototype.shouldPrune = function (root) {
@@ -539,7 +539,7 @@ var Native = (function () {
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
 
-},{"./utils/async":8,"./utils/stylesheet":9}],6:[function(require,module,exports){
+},{"./utils/async":8,"./utils/stylesheet":9,"./utils/walker":10}],6:[function(require,module,exports){
 var async = require("./async");
 
 /** Helper to process recursive chains */
