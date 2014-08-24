@@ -37,6 +37,8 @@ export module iwc {
     export var components:cmps.Components = new cmps.Components(impl);
 }
 
-// Export module for AMD in browserify
+// Export module
 declare var define:any;
-try { define('iwc', function () { return iwc; }); } catch (e) { }
+try { define('iwc', function () { return iwc; }); } catch (e) {
+  try { window['iwc'] = iwc; } catch(e) {}
+}

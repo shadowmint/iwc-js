@@ -38,9 +38,16 @@ module.exports = function (grunt) {
                     '<%= path.dist %>': ['<%= path.tmp %>/**/*.js']
                 }
             }
+        },
+        uglify: {
+            lib: {
+                files: {
+                    'dist/iwc.min.js': 'dist/iwc.js'
+                }
+            }
         }
     });
-    ext.registerTask('_lib', ['ts:lib', 'nodeunit:lib', 'browserify:lib']);
+    ext.registerTask('_lib', ['ts:lib', 'nodeunit:lib', 'browserify:lib', 'uglify']);
 
     // Dev
     ext.configure({

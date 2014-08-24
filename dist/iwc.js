@@ -472,6 +472,10 @@ try  {
         return iwc;
     });
 } catch (e) {
+    try  {
+        window['iwc'] = iwc;
+    } catch (e) {
+    }
 }
 //# sourceMappingURL=iwc.js.map
 
@@ -506,7 +510,7 @@ var Native = (function () {
             if (typeof (content) == "string") {
                 root.innerHTML = content;
                 async.async(function () {
-                    done(root.children[0]);
+                    done(root);
                 });
             } else {
                 root.innerHTML = "";

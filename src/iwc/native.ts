@@ -31,7 +31,7 @@ export class Native implements c.ComponentsImpl {
           if (typeof(content) == "string") {
             root.innerHTML = content;
             async.async(() => {
-              done(root.children[0]);
+              done(root);
             });
           }
           else {
