@@ -11,7 +11,7 @@ export interface Component {
     /**
      * Handle the data natively found in a component instance.
      * This is an aggregate of the data elements found in the component.
-     * For exampl109Ge, if the component is:
+     * For example, if the component is:
      *
      *      <div class="component-x" data-y="100">
      *          <div data-item="item1" data-value="one"/>
@@ -72,7 +72,10 @@ export interface Factory {
     /** Generate a list of HTML elements to load as components */
     query(root:any):any[];
 
-    /** Generate a component instance from the given root node */
+    /**
+     * Generate an empty component instance.
+     * NB. The root will be asynchronously assigned on the root property.
+     */
     factory():Component;
 
     /** Return a serialized stylesheet as a string to inject, or null */

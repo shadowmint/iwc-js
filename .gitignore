@@ -3,6 +3,5 @@ node_modules
 dist/iwc
 demo/js/lib
 *.js.map
-*.d.ts
 .tscache
 .idea

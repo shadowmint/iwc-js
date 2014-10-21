@@ -35,7 +35,7 @@ module.exports = function (grunt) {
         browserify: {
             lib: {
                 files: {
-                    '<%= path.dist %>': ['<%= path.tmp %>/**/*.js']
+                    '<%= path.dist %>': ['<%= path.tmp %>/**/*.js', '!**/*_tests.js']
                 }
             }
         },

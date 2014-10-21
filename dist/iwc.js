@@ -156,225 +156,7 @@ var Components = (function () {
 })();
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
-},{"./utils/action_chain":6}],3:[function(require,module,exports){
-var __extends = this.__extends || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    __.prototype = b.prototype;
-    d.prototype = new __();
-};
-var c = require('./components');
-var cmp = require('./component');
-// test impl
-var TestImpl = (function () {
-    function TestImpl() {
-        this.stylesheets = 0;
-        this.instances = 0;
-        this.inits = 0;
-        this.injected = 0;
-        this.drops = 0;
-        this.data = null;
-    }
-    TestImpl.prototype.shouldPrune = function (root) {
-        return true;
-    };
-    TestImpl.prototype.injectStyles = function (styles) {
-        if (styles) {
-            this.stylesheets += 1;
-        }
-    };
-    TestImpl.prototype.collectData = function (root) {
-        return this.data;
-    };
-    TestImpl.prototype.injectContent = function (root, content, done) {
-        if (content) {
-            this.injected += 1;
-            root.value = content;
-        }
-        else {
-            root.value = '';
-        }
-        done(root);
-    };
-    TestImpl.prototype.equivRoot = function (r1, r2) {
-        return r1 === r2;
-    };
-    return TestImpl;
-})();
-// test component type
-var Cmp = (function (_super) {
-    __extends(Cmp, _super);
-    function Cmp(impl) {
-        _super.call(this);
-        this.is_valid = null;
-        this.inner = null;
-        this.impl = impl;
-    }
-    Cmp.prototype.init = function () {
-        this.impl.inits += 1;
-    };
-    Cmp.prototype.content = function () {
-        return this.inner;
-    };
-    Cmp.prototype.valid = function () {
-        return this.is_valid;
-    };
-    Cmp.prototype.drop = function () {
-        this.impl.drops += 1;
-    };
-    return Cmp;
-})(cmp.Base);
-// test component factory
-var Factory = (function () {
-    function Factory(impl, stylesheet, roots) {
-        if (stylesheet === void 0) { stylesheet = null; }
-        if (roots === void 0) { roots = []; }
-        this.id = null;
-        this.impl = impl;
-        this.roots = roots;
-        this.stylesheet = stylesheet;
-    }
-    Factory.prototype.factory = function () {
-        var cmp = new Cmp(this.impl);
-        if (this.id != null) {
-            cmp.inner = Factory.content_map[this.id];
-        }
-        this.impl.instances += 1;
-        return cmp;
-    };
-    Factory.prototype.query = function (root) {
-        if ((root.value != null) && (this.id != null)) {
-            var items = root.value.split('');
-            var rtn = [];
-            for (var i = 0; i < items.length; ++i) {
-                if (items[i] == this.id) {
-                    rtn.push({ value: items[i] });
-                }
-            }
-            return rtn;
-        }
-        var r = this.roots;
-        this.roots = [];
-        return r;
-    };
-    Factory.content_map = {};
-    return Factory;
-})();
-// generate a test instance
-function tmp() {
-    var impl = new TestImpl();
-    var factory = new Factory(impl);
-    var components = new c.Components(impl);
-    return { impl: impl, factory: factory, components: components };
-}
-// generate a test component group
-function tmp_group() {
-    var impl = new TestImpl();
-    var components = new c.Components(impl);
-    var rtn = { impl: impl, factory: [], components: components };
-    for (var i = 0; i < 10; ++i) {
-        rtn.factory.push(new Factory(impl));
-        rtn.factory[i].id = i;
-        rtn.components.add(rtn.factory[i]);
-    }
-    return rtn;
-}
-function test_create(t) {
-    var i = tmp();
-    t.ok(i.factory);
-    t.ok(i.components);
-    t.done();
-}
-exports.test_create = test_create;
-function test_add(t) {
-    var i = tmp();
-    i.components.add(i.factory);
-    i.components.add(i.factory);
-    t.equals(i.components['_factory'].length, 1);
-    t.done();
-}
-exports.test_add = test_add;
-function test_drop(t) {
-    var i = tmp();
-    i.components.add(i.factory);
-    i.components.drop(i.factory);
-    t.equals(i.components['_factory'].length, 0);
-    t.done();
-}
-exports.test_drop = test_drop;
-function test_stylesheets(t) {
-    var i = tmp();
-    i.factory.stylesheet = 'Hi';
-    i.components.add(i.factory);
-    t.equals(i.impl.stylesheets, 1);
-    t.done();
-}
-exports.test_stylesheets = test_stylesheets;
-function test_recursive_load(t) {
-    var i = tmp_group();
-    i.factory[0].id = '0';
-    i.factory[1].id = '1';
-    i.factory[2].id = '2';
-    Factory.content_map['0'] = '2';
-    Factory.content_map['2'] = '3';
-    i.components.load({ value: "0110" }, function () {
-        t.equals(i.impl.instances, 8);
-        t.equals(i.impl.inits, 8);
-        t.equals(i.impl.injected, 4);
-        t.done();
-    });
-}
-exports.test_recursive_load = test_recursive_load;
-function test_load(t) {
-    var i = tmp();
-    i.factory.roots = [1, 2, 3];
-    i.components.add(i.factory);
-    i.components.load("Value", function () {
-        t.equals(i.impl.inits, 3);
-        t.equals(i.impl.instances, 3);
-        t.done();
-    });
-}
-exports.test_load = test_load;
-function test_prune(t) {
-    var i = tmp();
-    i.factory.roots = [1, 2, 3];
-    i.components.add(i.factory);
-    i.components.load("Value", function () {
-        i.components.prune();
-        t.equals(i.impl.inits, 3);
-        t.equals(i.impl.drops, 3);
-        t.done();
-    });
-}
-exports.test_prune = test_prune;
-function test_data(t) {
-    var i = tmp();
-    i.factory.roots = [1];
-    i.impl.data = {
-        'data-foo': ['one', 'two', 'three'],
-        'data-bar': ['one'],
-        'data-foobar': ['1', '2', '3', '4', '5']
-    };
-    i.components.add(i.factory);
-    i.components.load("Value", function () {
-        var instance = i.components.query(1);
-        t.equals(instance.data.foo.length, 3);
-        t.equals(instance.data.bar.length, 1);
-        t.equals(instance.data.foobar.length, 5);
-        t.equals(instance.data._all.length, 5);
-        t.equals(instance.data._all[0].foo, 'one');
-        t.equals(instance.data._all[0].bar, 'one');
-        t.equals(instance.data._all[0].foobar, '1');
-        t.equals(instance.data._all[4].foo, undefined);
-        t.equals(instance.data._all[4].bar, undefined);
-        t.equals(instance.data._all[4].foobar, '5');
-        t.done();
-    });
-}
-exports.test_data = test_data;
-//# sourceMappingURL=components_tests.js.map
-},{"./component":1,"./components":2}],4:[function(require,module,exports){
+},{"./utils/action_chain":5}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -434,7 +216,7 @@ catch (e) {
     }
 }
 //# sourceMappingURL=iwc.js.map
-},{"./component":1,"./components":2,"./native":5}],5:[function(require,module,exports){
+},{"./component":1,"./components":2,"./native":4}],4:[function(require,module,exports){
 var ss = require('./utils/stylesheet');
 var async = require('./utils/async');
 var walk = require('./utils/walker');
@@ -494,7 +276,7 @@ var Native = (function () {
 })();
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
-},{"./utils/async":8,"./utils/stylesheet":9,"./utils/walker":10}],6:[function(require,module,exports){
+},{"./utils/async":6,"./utils/stylesheet":7,"./utils/walker":8}],5:[function(require,module,exports){
 var async = require("./async");
 /** Helper to process recursive chains */
 var Actions = (function () {
@@ -560,63 +342,7 @@ var Actions = (function () {
 })();
 exports.Actions = Actions;
 //# sourceMappingURL=action_chain.js.map
-},{"./async":8}],7:[function(require,module,exports){
-var chain = require('./action_chain');
-var async = require('./async');
-function test_create(t) {
-    var instance = new chain.Actions();
-    t.ok(instance);
-    t.done();
-}
-exports.test_create = test_create;
-function test_recursive_command_chain(t) {
-    var total = 0;
-    var items = function (root) {
-        if (root.value) {
-            var rtn = [];
-            var bits = root.value.split(' ');
-            for (var i = 0; i < bits.length; ++i) {
-                rtn.push({ value: bits[i] });
-            }
-            return rtn;
-        }
-        return [];
-    };
-    var item = function (root, loaded) {
-        total += 1;
-        switch (root.value) {
-            case '00':
-                root.value = '01 01';
-                break;
-            case '01':
-                root.value = '02 02';
-                break;
-            default:
-                root.value = null;
-                break;
-        }
-        async.async(function () {
-            loaded(root);
-        });
-    };
-    var instance = new chain.Actions();
-    instance.item = item;
-    instance.items = items;
-    instance.push({ value: "00 01 00 02 00" });
-    // Expansion:
-    // 00          01    00          02 00
-    // 01    01    02 02 01    01       01    01
-    // 02 02 02 02       02 02 02 02    02 02 02 02
-    //
-    // total = 25 items
-    instance.all(function () {
-        t.equals(total, 25);
-        t.done();
-    });
-}
-exports.test_recursive_command_chain = test_recursive_command_chain;
-//# sourceMappingURL=action_chain_tests.js.map
-},{"./action_chain":6,"./async":8}],8:[function(require,module,exports){
+},{"./async":6}],6:[function(require,module,exports){
 /** Invoke an action async */
 function async(action) {
     setTimeout(function () {
@@ -625,7 +351,7 @@ function async(action) {
 }
 exports.async = async;
 //# sourceMappingURL=async.js.map
-},{}],9:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
@@ -759,7 +485,7 @@ function replaceStyleSheet(node, css, callback) {
 }
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
-},{}],10:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /** Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
@@ -814,4 +540,4 @@ var Walk = (function () {
 })();
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
-},{}]},{},[1,2,3,4,5,6,7,8,9,10]);
+},{}]},{},[1,2,3,4,5,6,7,8]);
