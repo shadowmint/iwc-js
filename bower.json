@@ -1,6 +1,6 @@
 {
-  "name": "iwc-js",
-  "version": "0.1.6",
+  "name": "iwc.js",
+  "version": "0.1.7",
   "main": "dist/iwc.js",
   "ignore": [
     "Gruntfile.js",
