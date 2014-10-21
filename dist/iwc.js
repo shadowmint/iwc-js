@@ -1,6 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-
-
 /** A default implementation to extend */
 var Base = (function () {
     function Base() {
@@ -8,19 +6,15 @@ var Base = (function () {
     Base.prototype.content = function () {
         return null;
     };
-
     Base.prototype.init = function () {
     };
-
     Base.prototype.api = function () {
         return this;
     };
-
     Base.prototype.drop = function () {
         this.root = null;
         this.data = null;
     };
-
     Base.prototype.valid = function () {
         return null;
     };
@@ -28,11 +22,8 @@ var Base = (function () {
 })();
 exports.Base = Base;
 //# sourceMappingURL=component.js.map
-
 },{}],2:[function(require,module,exports){
 var actions = require('./utils/action_chain');
-
-
 /** Component registry */
 var Components = (function () {
     function Components(impl) {
@@ -53,12 +44,11 @@ var Components = (function () {
         }
         return index;
     };
-
     /** Load any component instances */
     Components.prototype.load = function (root, done) {
         var _this = this;
-        if (typeof root === "undefined") { root = null; }
-        if (typeof done === "undefined") { done = null; }
+        if (root === void 0) { root = null; }
+        if (done === void 0) { done = null; }
         var action = new actions.Actions();
         action.push({ node: root, factory: null });
         action.items = function (root) {
@@ -82,13 +72,13 @@ var Components = (function () {
                     instance.init();
                     loaded({ node: root, factory: null });
                 });
-            } else {
+            }
+            else {
                 loaded(null);
             }
         };
         action.all(done);
     };
-
     /** Check if the given root already exists on some component */
     Components.prototype._exists = function (root) {
         for (var i = 0; i < this._instances.length; ++i) {
@@ -98,7 +88,6 @@ var Components = (function () {
         }
         return false;
     };
-
     /** Parse data values and combine them */
     Components.prototype._data = function (data) {
         var rtn = {};
@@ -123,7 +112,6 @@ var Components = (function () {
         rtn['_all'] = all;
         return rtn;
     };
-
     /** Add a component type */
     Components.prototype.add = function (factory) {
         if (this._indexOf(factory, this._factory) == -1) {
@@ -133,7 +121,6 @@ var Components = (function () {
             }
         }
     };
-
     /** Remove a component type */
     Components.prototype.drop = function (factory) {
         var index = this._indexOf(factory, this._factory);
@@ -141,20 +128,19 @@ var Components = (function () {
             this._factory.splice(index, 1);
         }
     };
-
     /** Prune existing component instances */
     Components.prototype.prune = function () {
         var instances = [];
         for (var i = 0; i < this._instances.length; ++i) {
             if ((this._instances[i]['valid'] && (this._instances[i]['valid']() === true)) || (this._impl.shouldPrune(this._instances[i].root))) {
                 this._instances[i].drop();
-            } else {
+            }
+            else {
                 instances.push(this._instances[i]);
             }
         }
         this._instances = instances;
     };
-
     /** Query an element by root value */
     Components.prototype.query = function (root) {
         var rtn = null;
@@ -170,7 +156,6 @@ var Components = (function () {
 })();
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
-
 },{"./utils/action_chain":6}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -180,7 +165,6 @@ var __extends = this.__extends || function (d, b) {
 };
 var c = require('./components');
 var cmp = require('./component');
-
 // test impl
 var TestImpl = (function () {
     function TestImpl() {
@@ -194,33 +178,29 @@ var TestImpl = (function () {
     TestImpl.prototype.shouldPrune = function (root) {
         return true;
     };
-
     TestImpl.prototype.injectStyles = function (styles) {
         if (styles) {
             this.stylesheets += 1;
         }
     };
-
     TestImpl.prototype.collectData = function (root) {
         return this.data;
     };
-
     TestImpl.prototype.injectContent = function (root, content, done) {
         if (content) {
             this.injected += 1;
             root.value = content;
-        } else {
+        }
+        else {
             root.value = '';
         }
         done(root);
     };
-
     TestImpl.prototype.equivRoot = function (r1, r2) {
         return r1 === r2;
     };
     return TestImpl;
 })();
-
 // test component type
 var Cmp = (function (_super) {
     __extends(Cmp, _super);
@@ -233,26 +213,22 @@ var Cmp = (function (_super) {
     Cmp.prototype.init = function () {
         this.impl.inits += 1;
     };
-
     Cmp.prototype.content = function () {
         return this.inner;
     };
-
     Cmp.prototype.valid = function () {
         return this.is_valid;
     };
-
     Cmp.prototype.drop = function () {
         this.impl.drops += 1;
     };
     return Cmp;
 })(cmp.Base);
-
 // test component factory
 var Factory = (function () {
     function Factory(impl, stylesheet, roots) {
-        if (typeof stylesheet === "undefined") { stylesheet = null; }
-        if (typeof roots === "undefined") { roots = []; }
+        if (stylesheet === void 0) { stylesheet = null; }
+        if (roots === void 0) { roots = []; }
         this.id = null;
         this.impl = impl;
         this.roots = roots;
@@ -266,7 +242,6 @@ var Factory = (function () {
         this.impl.instances += 1;
         return cmp;
     };
-
     Factory.prototype.query = function (root) {
         if ((root.value != null) && (this.id != null)) {
             var items = root.value.split('');
@@ -285,7 +260,6 @@ var Factory = (function () {
     Factory.content_map = {};
     return Factory;
 })();
-
 // generate a test instance
 function tmp() {
     var impl = new TestImpl();
@@ -293,7 +267,6 @@ function tmp() {
     var components = new c.Components(impl);
     return { impl: impl, factory: factory, components: components };
 }
-
 // generate a test component group
 function tmp_group() {
     var impl = new TestImpl();
@@ -306,7 +279,6 @@ function tmp_group() {
     }
     return rtn;
 }
-
 function test_create(t) {
     var i = tmp();
     t.ok(i.factory);
@@ -314,7 +286,6 @@ function test_create(t) {
     t.done();
 }
 exports.test_create = test_create;
-
 function test_add(t) {
     var i = tmp();
     i.components.add(i.factory);
@@ -323,7 +294,6 @@ function test_add(t) {
     t.done();
 }
 exports.test_add = test_add;
-
 function test_drop(t) {
     var i = tmp();
     i.components.add(i.factory);
@@ -332,7 +302,6 @@ function test_drop(t) {
     t.done();
 }
 exports.test_drop = test_drop;
-
 function test_stylesheets(t) {
     var i = tmp();
     i.factory.stylesheet = 'Hi';
@@ -341,7 +310,6 @@ function test_stylesheets(t) {
     t.done();
 }
 exports.test_stylesheets = test_stylesheets;
-
 function test_recursive_load(t) {
     var i = tmp_group();
     i.factory[0].id = '0';
@@ -357,7 +325,6 @@ function test_recursive_load(t) {
     });
 }
 exports.test_recursive_load = test_recursive_load;
-
 function test_load(t) {
     var i = tmp();
     i.factory.roots = [1, 2, 3];
@@ -369,7 +336,6 @@ function test_load(t) {
     });
 }
 exports.test_load = test_load;
-
 function test_prune(t) {
     var i = tmp();
     i.factory.roots = [1, 2, 3];
@@ -382,7 +348,6 @@ function test_prune(t) {
     });
 }
 exports.test_prune = test_prune;
-
 function test_data(t) {
     var i = tmp();
     i.factory.roots = [1];
@@ -409,7 +374,6 @@ function test_data(t) {
 }
 exports.test_data = test_data;
 //# sourceMappingURL=components_tests.js.map
-
 },{"./component":1,"./components":2}],4:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -420,11 +384,8 @@ var __extends = this.__extends || function (d, b) {
 var cmps = require('./components');
 var cmp = require('./component');
 var native = require('./native');
+var iwc;
 (function (iwc) {
-    
-
-    
-
     /** A default implementation to extend */
     var Base = (function (_super) {
         __extends(Base, _super);
@@ -434,56 +395,49 @@ var native = require('./native');
         return Base;
     })(cmp.Base);
     iwc.Base = Base;
-
     /** Create a new component */
     function register(factory) {
         iwc.components.add(factory);
     }
     iwc.register = register;
-
     /** Discard a component type */
     function deregister(factory) {
         iwc.components.drop(factory);
     }
     iwc.deregister = deregister;
-
     /** Manually prune the components list */
     function prune() {
         iwc.components.prune();
     }
     iwc.prune = prune;
-
     /** Reload components from the given root node */
     function load(root, done) {
-        if (typeof root === "undefined") { root = null; }
-        if (typeof done === "undefined") { done = null; }
+        if (root === void 0) { root = null; }
+        if (done === void 0) { done = null; }
         iwc.components.load(root, done);
     }
     iwc.load = load;
-
     /** The component register */
     var impl = new native.Native();
     iwc.components = new cmps.Components(impl);
-})(exports.iwc || (exports.iwc = {}));
-var iwc = exports.iwc;
-
-try  {
+})(iwc = exports.iwc || (exports.iwc = {}));
+try {
     define('iwc', function () {
         return iwc;
     });
-} catch (e) {
-    try  {
+}
+catch (e) {
+    try {
         window['iwc'] = iwc;
-    } catch (e) {
+    }
+    catch (e) {
     }
 }
 //# sourceMappingURL=iwc.js.map
-
 },{"./component":1,"./components":2,"./native":5}],5:[function(require,module,exports){
 var ss = require('./utils/stylesheet');
 var async = require('./utils/async');
 var walk = require('./utils/walker');
-
 /** Native dom bindings for the components object api */
 var Native = (function () {
     function Native() {
@@ -494,16 +448,13 @@ var Native = (function () {
             ss.appendStyleSheet(styles);
         }
     };
-
     Native.prototype.collectData = function (root) {
         return new walk.Walk(root).walk().attribs;
     };
-
     Native.prototype.shouldPrune = function (root) {
         // TODO
         return true;
     };
-
     /** Insert node as root or replace root with html; attach uid. */
     Native.prototype.injectContent = function (root, content, done) {
         if (content) {
@@ -512,13 +463,15 @@ var Native = (function () {
                 async.async(function () {
                     done(root);
                 });
-            } else {
+            }
+            else {
                 root.innerHTML = "";
                 async.async(function () {
-                    try  {
+                    try {
                         root.appendChild(content);
                         done(content);
-                    } catch (e) {
+                    }
+                    catch (e) {
                         throw new Error("Invalid node could not be injected into the DOM");
                     }
                 });
@@ -526,26 +479,23 @@ var Native = (function () {
         }
         root['data-uid'] = this._uid();
     };
-
     /** Use UID's to compare node instances */
     Native.prototype.equivRoot = function (r1, r2) {
         return r1['data-uid'] === r2['data-uid'];
     };
-
     /** Generate a unique id */
     Native.prototype._uid = function () {
         Native.id += 1;
         return Native.id;
     };
+    /** Uid source */
     Native.id = 0;
     return Native;
 })();
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
-
 },{"./utils/async":8,"./utils/stylesheet":9,"./utils/walker":10}],6:[function(require,module,exports){
 var async = require("./async");
-
 /** Helper to process recursive chains */
 var Actions = (function () {
     function Actions() {
@@ -558,12 +508,11 @@ var Actions = (function () {
     Actions.prototype.push = function (root) {
         this.roots.push(root);
     };
-
     /**
-    * Process the next root node and then invoke next.
-    * @param items A callback to take a root node and spit out a set of items.
-    * @param item A callback to load a single item and then invoke the callback with a new root node.
-    */
+     * Process the next root node and then invoke next.
+     * @param items A callback to take a root node and spit out a set of items.
+     * @param item A callback to load a single item and then invoke the callback with a new root node.
+     */
     Actions.prototype.process = function (next) {
         var _this = this;
         if (this.roots.length) {
@@ -571,7 +520,8 @@ var Actions = (function () {
             var found = this.items(root);
             if (found.length == 0) {
                 next();
-            } else {
+            }
+            else {
                 var waiting = found.length;
                 var maybe_done = function () {
                     waiting -= 1;
@@ -588,11 +538,11 @@ var Actions = (function () {
                     });
                 }
             }
-        } else if (this.complete) {
+        }
+        else if (this.complete) {
             this.complete();
         }
     };
-
     /** Process all root nodes and then invoke the callback */
     Actions.prototype.all = function (complete) {
         var _this = this;
@@ -610,21 +560,17 @@ var Actions = (function () {
 })();
 exports.Actions = Actions;
 //# sourceMappingURL=action_chain.js.map
-
 },{"./async":8}],7:[function(require,module,exports){
 var chain = require('./action_chain');
 var async = require('./async');
-
 function test_create(t) {
     var instance = new chain.Actions();
     t.ok(instance);
     t.done();
 }
 exports.test_create = test_create;
-
 function test_recursive_command_chain(t) {
     var total = 0;
-
     var items = function (root) {
         if (root.value) {
             var rtn = [];
@@ -636,7 +582,6 @@ function test_recursive_command_chain(t) {
         }
         return [];
     };
-
     var item = function (root, loaded) {
         total += 1;
         switch (root.value) {
@@ -654,12 +599,10 @@ function test_recursive_command_chain(t) {
             loaded(root);
         });
     };
-
     var instance = new chain.Actions();
     instance.item = item;
     instance.items = items;
     instance.push({ value: "00 01 00 02 00" });
-
     // Expansion:
     // 00          01    00          02 00
     // 01    01    02 02 01    01       01    01
@@ -673,7 +616,6 @@ function test_recursive_command_chain(t) {
 }
 exports.test_recursive_command_chain = test_recursive_command_chain;
 //# sourceMappingURL=action_chain_tests.js.map
-
 },{"./action_chain":6,"./async":8}],8:[function(require,module,exports){
 /** Invoke an action async */
 function async(action) {
@@ -683,103 +625,103 @@ function async(action) {
 }
 exports.async = async;
 //# sourceMappingURL=async.js.map
-
 },{}],9:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
 var _stylesheet = {};
-
 /**
-* For awareness of KB262161, if 31 or more total stylesheets exist when invoking appendStyleSheet, insertStyleSheetBefore or replaceStyleSheet, an error will be thrown in ANY browser.
-* If you really want to disable this error (for non-IE), set this flag to true.
-*
-* Note: Once you hit 31 stylesheets in IE8 & IE9, you will be unable to create any new stylesheets successfully (regardless of this setting) and this will ALWAYS cause an error.
-*/
+ * For awareness of KB262161, if 31 or more total stylesheets exist when invoking appendStyleSheet, insertStyleSheetBefore or replaceStyleSheet, an error will be thrown in ANY browser.
+ * If you really want to disable this error (for non-IE), set this flag to true.
+ *
+ * Note: Once you hit 31 stylesheets in IE8 & IE9, you will be unable to create any new stylesheets successfully (regardless of this setting) and this will ALWAYS cause an error.
+ */
 _stylesheet.ignoreKB262161 = false;
-
 /**
-* Create an empty stylesheet and insert it into the DOM before the specified node. If no node is specified, then it will be appended at the end of the head.
-*
-* @param node - DOM element
-* @param callback - function(err, style)
-*/
+ * Create an empty stylesheet and insert it into the DOM before the specified node. If no node is specified, then it will be appended at the end of the head.
+ *
+ * @param node - DOM element
+ * @param callback - function(err, style)
+ */
 function insertEmptyStyleBefore(node, callback) {
     var style = document.createElement('style');
     style.setAttribute('type', 'text/css');
     var head = document.getElementsByTagName('head')[0];
     if (node) {
         head.insertBefore(style, node);
-    } else {
+    }
+    else {
         head.appendChild(style);
     }
     if (style.styleSheet && style.styleSheet.disabled) {
         head.removeChild(style);
         callback('Unable to add any more stylesheets because you have exceeded the maximum allowable stylesheets. See KB262161 for more information.');
-    } else {
+    }
+    else {
         callback(null, style);
     }
 }
-
 /**
-* Set the CSS text on the specified style element.
-* @param style
-* @param css
-* @param callback - function(err)
-*/
+ * Set the CSS text on the specified style element.
+ * @param style
+ * @param css
+ * @param callback - function(err)
+ */
 function setStyleCss(style, css, callback) {
-    try  {
+    try {
         // Favor cssText over textContent as it appears to be slightly faster for IE browsers.
         if (style.styleSheet) {
             style.styleSheet.cssText = css;
-        } else if ('textContent' in style) {
+        }
+        else if ('textContent' in style) {
             style.textContent = css;
-        } else {
+        }
+        else {
             style.appendChild(document.createTextNode(css));
         }
-    } catch (e) {
+    }
+    catch (e) {
         // Ideally this should never happen but there are still obscure cases with IE where attempting to set cssText can fail.
         return callback(e);
     }
     return callback(null);
 }
-
 /**
-* Remove the specified style element from the DOM unless it's not in the DOM already.
-*
-* Note: This isn't doing anything special now, but if any edge-cases arise which need handling (e.g. IE), they can be implemented here.
-* @param node
-*/
+ * Remove the specified style element from the DOM unless it's not in the DOM already.
+ *
+ * Note: This isn't doing anything special now, but if any edge-cases arise which need handling (e.g. IE), they can be implemented here.
+ * @param node
+ */
 function removeStyleSheet(node) {
     if (node.tagName === 'STYLE' && node.parentNode) {
         node.parentNode.removeChild(node);
     }
 }
-
 /**
-* Create a stylesheet with the specified options.
-* @param options - options object. e.g. {ignoreKB262161: true, replace: null, css: 'body {}' }
-* @param callback - function(err, style)
-*
-* options
-* - css; The css text which will be used to create the new stylesheet.
-* - replace; Specify a style element which will be deleted and the new stylesheet will take its place. This overrides the 'insertBefore' option.
-* - insertBefore; If specified, the new stylesheet will be inserted before this DOM node. If this value is null or undefined, then it will be appended to the head element.
-*/
+ * Create a stylesheet with the specified options.
+ * @param options - options object. e.g. {ignoreKB262161: true, replace: null, css: 'body {}' }
+ * @param callback - function(err, style)
+ *
+ * options
+ * - css; The css text which will be used to create the new stylesheet.
+ * - replace; Specify a style element which will be deleted and the new stylesheet will take its place. This overrides the 'insertBefore' option.
+ * - insertBefore; If specified, the new stylesheet will be inserted before this DOM node. If this value is null or undefined, then it will be appended to the head element.
+ */
 function createStyleSheet(options, callback) {
     if (!_stylesheet.ignoreKB262161 && document.styleSheets.length >= 31) {
         callback('Unable to add any more stylesheets because you have exceeded the maximum allowable stylesheets. See KB262161 for more information.');
     }
-
     insertEmptyStyleBefore(options.replace ? options.replace.nextSibling : options.insertBefore, function (err, style) {
         if (err) {
             callback(err);
-        } else {
+        }
+        else {
             setStyleCss(style, options.css || "", function (err) {
                 if (err) {
                     removeStyleSheet(style);
                     callback(err);
-                } else {
+                }
+                else {
                     // TODO: Desirable to duplicate attributes to the new stylesheet. (I have seen some unusual things in IE8 so I do not think this is trivial).
                     if (options.replace) {
                         removeStyleSheet(options.replace);
@@ -790,18 +732,16 @@ function createStyleSheet(options, callback) {
         }
     });
 }
-
 function appendStyleSheet(css, callback) {
-    if (typeof callback === "undefined") { callback = function (msg) {
+    if (callback === void 0) { callback = function (msg) {
     }; }
     createStyleSheet({
         css: css
     }, callback);
 }
 exports.appendStyleSheet = appendStyleSheet;
-
 function insertStyleSheetBefore(node, css, callback) {
-    if (typeof callback === "undefined") { callback = function (msg) {
+    if (callback === void 0) { callback = function (msg) {
     }; }
     createStyleSheet({
         insertBefore: node,
@@ -809,9 +749,8 @@ function insertStyleSheetBefore(node, css, callback) {
     }, callback);
 }
 exports.insertStyleSheetBefore = insertStyleSheetBefore;
-
 function replaceStyleSheet(node, css, callback) {
-    if (typeof callback === "undefined") { callback = function (msg) {
+    if (callback === void 0) { callback = function (msg) {
     }; }
     createStyleSheet({
         replace: node,
@@ -820,7 +759,6 @@ function replaceStyleSheet(node, css, callback) {
 }
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
-
 },{}],10:[function(require,module,exports){
 /** Walk through the DOM and touch each node */
 var Walk = (function () {
@@ -836,7 +774,6 @@ var Walk = (function () {
         });
         return this;
     };
-
     /** Invoke a callback for each DOM node */
     Walk.prototype.each = function (callback) {
         var stack = [this.root];
@@ -848,7 +785,6 @@ var Walk = (function () {
             }
         }
     };
-
     /** Get a list of data attributes from a node */
     Walk.prototype.data = function (node) {
         var rtn = [];
@@ -878,5 +814,4 @@ var Walk = (function () {
 })();
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
-
 },{}]},{},[1,2,3,4,5,6,7,8,9,10]);
