@@ -1,6 +1,6 @@
 node_modules
 .baseDir*
-dist/iwc
+dist/iwc/*.js
 demo/js/lib
 *.js.map
 .tscache
