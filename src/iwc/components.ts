@@ -136,26 +136,41 @@ export class Components {
 
     /** Remove a component type */
     public drop(factory:cmp.Factory):void {
-        var index = this._indexOf(factory, this._factory);
-        if (index != -1) {
-            this._factory.splice(index, 1);
-        }
+      var index = this._indexOf(factory, this._factory);
+      if (index != -1) {
+        this._factory.splice(index, 1);
+      }
     }
 
     /** Prune existing component instances */
     public prune():void {
-        var instances = [];
-        for (var i = 0; i < this._instances.length; ++i) {
-            if ((this._instances[i]['valid'] && (this._instances[i]['valid']() === true)) ||
-                (this._impl.shouldPrune(this._instances[i].root)))
-            {
-                this._instances[i].drop();
-            }
-            else {
-                instances.push(this._instances[i]);
-            }
+      var instances = [];
+      for (var i = 0; i < this._instances.length; ++i) {
+        try {
+          if (this._instances[i]['valid']) {
+            var valid = this._instances[i]['valid']() === true;
+          }
+          else {
+            var valid = !this._impl.shouldPrune(this._instances[i].root);
+          }
         }
-        this._instances = instances;
+        catch(e) {
+          valid = false;
+        }
+        if (!valid) {
+          if (this._instances[i]['drop']) {
+            try {
+              this._instances[i]['drop']();
+            }
+            catch(e) {
+            }
+          }
+        }
+        else {
+          instances.push(this._instances[i]);
+        }
+      }
+      this._instances = instances;
     }
 
     /** Query an element by root value */

@@ -21,8 +21,10 @@ export class Native implements c.ComponentsImpl {
     }
 
     shouldPrune(root:any):boolean {
-        // TODO
-        return true;
+        console.log("Does body contain node");
+        console.log(root);
+        console.log(document.body.contains(root));
+        return !document.body.contains(root);
     }
 
     /** Insert node as root or replace root with html; attach uid. */
