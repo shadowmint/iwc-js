@@ -81,7 +81,9 @@ export class Components {
                 instance.factory = root.factory;
                 this._instances.push(instance);
                 this._impl.injectContent(root.node, instance.content(), (root) => {
-                    instance.init();
+                    if (instance.init) {
+                      instance.init();
+                    }
                     loaded({ node: root, factory: null });
                 });
             }
@@ -159,6 +161,7 @@ export class Components {
     /** Query an element by root value */
     public query(root:any):cmp.Component {
       var rtn:cmp.Component = null;
+      if (root.length) { root = root[0]; } // Support jquery
       for (var i = 0; i < this._instances.length; ++i) {
         if (this._impl.equivRoot(root, this._instances[i].root)) {
           rtn = this._instances[i];

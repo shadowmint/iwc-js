@@ -29,7 +29,13 @@ export class Native implements c.ComponentsImpl {
     injectContent(root:any, content:any, done:{(root:any):void}):void {
         if (content) {
           if (typeof(content) == "string") {
-            root.innerHTML = content;
+            try {
+              root.innerHTML = content;
+            }
+            catch(e) {
+              // Some browsers, notably IE, generate internal errors
+              // when setting innerHTML. Consume these errors silently.
+            }
             async.async(() => {
               done(root);
             });
@@ -42,7 +48,7 @@ export class Native implements c.ComponentsImpl {
                   done(content);
                 }
                 catch(e) {
-                  throw new Error("Invalid node could not be injected into the DOM");
+                  throw new Error("Invalid node could not be injected into the DOM: " + e);
                 }
               });
           }

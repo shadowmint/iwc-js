@@ -69,7 +69,9 @@ var Components = (function () {
                 instance.factory = root.factory;
                 _this._instances.push(instance);
                 _this._impl.injectContent(root.node, instance.content(), function (root) {
-                    instance.init();
+                    if (instance.init) {
+                        instance.init();
+                    }
                     loaded({ node: root, factory: null });
                 });
             }
@@ -144,6 +146,9 @@ var Components = (function () {
     /** Query an element by root value */
     Components.prototype.query = function (root) {
         var rtn = null;
+        if (root.length) {
+            root = root[0];
+        } // Support jquery
         for (var i = 0; i < this._instances.length; ++i) {
             if (this._impl.equivRoot(root, this._instances[i].root)) {
                 rtn = this._instances[i];
@@ -241,7 +246,11 @@ var Native = (function () {
     Native.prototype.injectContent = function (root, content, done) {
         if (content) {
             if (typeof (content) == "string") {
-                root.innerHTML = content;
+                try {
+                    root.innerHTML = content;
+                }
+                catch (e) {
+                }
                 async.async(function () {
                     done(root);
                 });
@@ -254,7 +263,7 @@ var Native = (function () {
                         done(content);
                     }
                     catch (e) {
-                        throw new Error("Invalid node could not be injected into the DOM");
+                        throw new Error("Invalid node could not be injected into the DOM: " + e);
                     }
                 });
             }

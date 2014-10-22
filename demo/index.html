@@ -2,15 +2,18 @@
 <head>
 </head>
 <body>
-    <section class="component--hello">
-      <div data-value="one">
-      <div data-value="two">
-      <div data-value="three">
-    </section>
 
+    <div id="example" class="component--hello">
+      <div data-value="one"></div>
+      <div data-value="two"></div>
+      <div data-value="three"></div>
+    </div>
+
+    <a href="#" id="touch">Change color</a>
+    <a href="#" id="drop">Clear content</a>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.1/jquery.js"></script>
-    <script src="../dist/iwc.min.js"></script>
+    <script src="../dist/iwc.js"></script>
     <script>
       iwc.register({
 
@@ -23,17 +26,21 @@
         factory: function() {
           var self = {
             content: function() {
-              return "Hello World: <section class='component--world'></section>" + JSON.stringify(self.data);
+              return "<div>Hello World: <div class='component--world'></div>" + self.data + "</div>";
             },
             init: function() {
-              console.log("Component loaded");
+              self.root.innerHTML += "Got init signal";
+            },
+            clear: function() {
+              self.root.innerHTML = "";
+              iwc.prune();
             }
           };
           return self;
         },
 
         /** Return a serialized stylesheet as a string to inject, or null */
-        stylesheet: ".component--hello { border: 2px solid #f00; }"
+        stylesheet: ".component--hello { border: 2px solid #efefef; padding: 10px; margin: 10px; }"
       });
 
       iwc.register({
@@ -46,17 +53,44 @@
         /** Generate a component instance from the given root node */
         factory: function() {
           return {
+            v: null,
             content: function() {
-              return "<img src='http://placekitten.com/300/300'/>";
+              var el = document.createElement('h1');
+              el.innerHTML = 'Hello Value - click to change color';
+              el.onclick = function() {
+                el.style.color = '#0f0';
+              };
+              this.v = el;
+              return el;
+            },
+            color: function() {
+              this.v.style.color = '#f00';
+            },
+            drop: function() {
+              alert('An instance of HELLO was removed from the DOM');
             }
           };
         },
 
         /** Return a serialized stylesheet as a string to inject, or null */
-        stylesheet: ".component--world { margin: 10px; }"
+        stylesheet: ".component--world { margin: 15px; }"
       });
 
+      // Parse components
       iwc.load(document.body);
+
+      // Fetch a component and update the color on it
+      $('#touch').click(function() {
+        var world = iwc.components.query($('#example .component--world'));
+        world.color();
+        return false;
+      });
+
+      // Drop the inner element and check it gets correctly pruned.
+      $('#drop').click(function() {
+        var world = iwc.components.query($('#example'));
+        world.clear();
+      });
     </script>
 </body>
 </html>
