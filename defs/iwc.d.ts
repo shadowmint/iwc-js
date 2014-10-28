@@ -48,7 +48,7 @@ declare module IWC {
         public add(factory: Factory): void;
         public drop(factory: Factory): void;
         public prune(): void;
-        public query(root: any): Component;
+        public query(root: any):any;
     }
 
     export function register(factory: Factory): void;

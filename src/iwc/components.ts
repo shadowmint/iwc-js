@@ -174,12 +174,12 @@ export class Components {
     }
 
     /** Query an element by root value */
-    public query(root:any):cmp.Component {
+    public query(root:any):any {
       var rtn:cmp.Component = null;
       if (root.length) { root = root[0]; } // Support jquery
       for (var i = 0; i < this._instances.length; ++i) {
         if (this._impl.equivRoot(root, this._instances[i].root)) {
-          rtn = this._instances[i];
+          rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
           break;
         }
       }

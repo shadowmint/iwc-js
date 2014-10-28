@@ -167,7 +167,7 @@ var Components = (function () {
         }
         for (var i = 0; i < this._instances.length; ++i) {
             if (this._impl.equivRoot(root, this._instances[i].root)) {
-                rtn = this._instances[i];
+                rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
                 break;
             }
         }
