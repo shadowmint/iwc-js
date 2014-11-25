@@ -36,11 +36,10 @@ export class Native implements c.ComponentsImpl {
             }
             catch(e) {
               // Some browsers, notably IE, generate internal errors
-              // when setting innerHTML. Consume these errors silently.
+              // when setting innerHTML for some elements, eg. section
+              // Consume these errors silently.
             }
-            async.async(() => {
-              done(root);
-            });
+            async.async(() => { done(root); });
           }
           else {
               root.innerHTML = "";
@@ -54,6 +53,9 @@ export class Native implements c.ComponentsImpl {
                 }
               });
           }
+        }
+        else {
+            async.async(() => { done(root); });
         }
         root['data-uid'] = this._uid();
     }
