@@ -68,7 +68,8 @@ var Components = (function () {
                 instance.data = _this._data(_this._impl.collectData(root.node));
                 instance.factory = root.factory;
                 _this._instances.push(instance);
-                _this._impl.injectContent(root.node, instance.content(), function (root) {
+                var content = instance.content ? instance.content() : null;
+                _this._impl.injectContent(root.node, content, function (root) {
                     if (instance.init) {
                         instance.init();
                     }

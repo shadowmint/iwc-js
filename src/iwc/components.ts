@@ -80,7 +80,8 @@ export class Components {
                 instance.data = this._data(this._impl.collectData(root.node));
                 instance.factory = root.factory;
                 this._instances.push(instance);
-                this._impl.injectContent(root.node, instance.content(), (root) => {
+                var content = instance.content ? instance.content() : null;
+                this._impl.injectContent(root.node, content, (root) => {
                     if (instance.init) {
                       instance.init();
                     }
