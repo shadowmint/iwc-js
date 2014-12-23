@@ -56,7 +56,9 @@ var Components = (function () {
             for (var i = 0; i < _this._factory.length; ++i) {
                 var list = _this._factory[i].query(root.node);
                 for (var j = 0; j < list.length; ++j) {
-                    rtn.push({ node: list[j], factory: _this._factory[i] });
+                    if (!_this._exists(list[j])) {
+                        rtn.push({ node: list[j], factory: _this._factory[i] });
+                    }
                 }
             }
             return rtn;
@@ -293,11 +295,18 @@ var Native = (function () {
                 done(root);
             });
         }
-        root['data-uid'] = this._uid();
+        if (root.setAttribute) {
+            root.setAttribute('data-iwc', this._uid());
+        }
+        else {
+            root['data-iwc'] = this._uid();
+        }
     };
     /** Use UID's to compare node instances */
     Native.prototype.equivRoot = function (r1, r2) {
-        return r1['data-uid'] === r2['data-uid'];
+        if ((r1.getAttribute) && (r2.getAttribute))
+            return r1.getAttribute('data-iwc') === r2.getAttribute('data-iwc');
+        return r1['data-iwc'] === r2['data-iwc'];
     };
     /** Generate a unique id */
     Native.prototype._uid = function () {

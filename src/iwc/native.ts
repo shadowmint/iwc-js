@@ -57,12 +57,19 @@ export class Native implements c.ComponentsImpl {
         else {
             async.async(() => { done(root); });
         }
-        root['data-uid'] = this._uid();
+        if (root.setAttribute) {
+            root.setAttribute('data-iwc', this._uid());
+        }
+        else {
+            root['data-iwc'] = this._uid();
+        }
     }
 
     /** Use UID's to compare node instances */
     equivRoot(r1:any, r2:any):boolean {
-        return r1['data-uid'] === r2['data-uid'];
+        if ((r1.getAttribute) && (r2.getAttribute))
+            return r1.getAttribute('data-iwc') === r2.getAttribute('data-iwc');
+        return r1['data-iwc'] === r2['data-iwc'];
     }
 
     /** Generate a unique id */

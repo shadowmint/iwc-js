@@ -62,13 +62,15 @@ export class Components {
     /** Load any component instances */
     public load(root:any = null, done:any = null):void {
         var action = new actions.Actions();
-        action.push({ node: root , factory: null });
+        action.push({node: root, factory: null});
         action.items = (root:any):any[] => {
             var rtn:any[] = [];
             for (var i = 0; i < this._factory.length; ++i) {
                 var list = this._factory[i].query(root.node);
                 for (var j = 0; j < list.length; ++j) {
-                    rtn.push({ node: list[j], factory: this._factory[i] });
+                    if (!this._exists(list[j])) {
+                        rtn.push({node: list[j], factory: this._factory[i]});
+                    }
                 }
             }
             return rtn;
@@ -83,9 +85,9 @@ export class Components {
                 var content = instance.content ? instance.content() : null;
                 this._impl.injectContent(root.node, content, (root) => {
                     if (instance.init) {
-                      instance.init();
+                        instance.init();
                     }
-                    loaded({ node: root, factory: null });
+                    loaded({node: root, factory: null});
                 });
             }
             else {
@@ -110,16 +112,21 @@ export class Components {
         var rtn = {};
         var all = [];
         for (var key in data) {
-          var name = key.split('data-').length == 2 ? key.split('data-')[1] : null;
-          if (name) {
-            var items = data[key];
-            for (var i = 0; i < items.length; ++i) {
-              if (!all[i]) { all[i] = {}; } var __all = all[i];
-              if (!rtn[name]) { rtn[name] = []; }
-              rtn[name].push(items[i]);
-              __all[name] = items[i];
+            var name = key.split('data-').length == 2 ? key.split('data-')[1] : null;
+            if (name) {
+                var items = data[key];
+                for (var i = 0; i < items.length; ++i) {
+                    if (!all[i]) {
+                        all[i] = {};
+                    }
+                    var __all = all[i];
+                    if (!rtn[name]) {
+                        rtn[name] = [];
+                    }
+                    rtn[name].push(items[i]);
+                    __all[name] = items[i];
+                }
             }
-          }
         }
         rtn['_all'] = all;
         return rtn;
@@ -137,53 +144,55 @@ export class Components {
 
     /** Remove a component type */
     public drop(factory:cmp.Factory):void {
-      var index = this._indexOf(factory, this._factory);
-      if (index != -1) {
-        this._factory.splice(index, 1);
-      }
+        var index = this._indexOf(factory, this._factory);
+        if (index != -1) {
+            this._factory.splice(index, 1);
+        }
     }
 
     /** Prune existing component instances */
     public prune():void {
-      var instances = [];
-      for (var i = 0; i < this._instances.length; ++i) {
-        try {
-          if (this._instances[i]['valid']) {
-            var valid = this._instances[i]['valid']() === true;
-          }
-          else {
-            var valid = !this._impl.shouldPrune(this._instances[i].root);
-          }
-        }
-        catch(e) {
-          valid = false;
-        }
-        if (!valid) {
-          if (this._instances[i]['drop']) {
+        var instances = [];
+        for (var i = 0; i < this._instances.length; ++i) {
             try {
-              this._instances[i]['drop']();
+                if (this._instances[i]['valid']) {
+                    var valid = this._instances[i]['valid']() === true;
+                }
+                else {
+                    var valid = !this._impl.shouldPrune(this._instances[i].root);
+                }
             }
-            catch(e) {
+            catch (e) {
+                valid = false;
             }
-          }
+            if (!valid) {
+                if (this._instances[i]['drop']) {
+                    try {
+                        this._instances[i]['drop']();
+                    }
+                    catch (e) {
+                    }
+                }
+            }
+            else {
+                instances.push(this._instances[i]);
+            }
         }
-        else {
-          instances.push(this._instances[i]);
-        }
-      }
-      this._instances = instances;
+        this._instances = instances;
     }
 
     /** Query an element by root value */
     public query(root:any):any {
-      var rtn:cmp.Component = null;
-      if (root.length) { root = root[0]; } // Support jquery
-      for (var i = 0; i < this._instances.length; ++i) {
-        if (this._impl.equivRoot(root, this._instances[i].root)) {
-          rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
-          break;
+        var rtn:cmp.Component = null;
+        if (root.length) {
+            root = root[0];
+        } // Support jquery
+        for (var i = 0; i < this._instances.length; ++i) {
+            if (this._impl.equivRoot(root, this._instances[i].root)) {
+                rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
+                break;
+            }
         }
-      }
-      return rtn;
+        return rtn;
     }
 }
