@@ -212,7 +212,7 @@ var Components = (function () {
 })();
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
-},{"./utils/action_chain":5,"./utils/errors":8}],3:[function(require,module,exports){
+},{"./utils/action_chain":5,"./utils/errors":7}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -349,7 +349,7 @@ var Native = (function () {
 })();
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
-},{"./utils/async":6,"./utils/stylesheet":9,"./utils/walker":10}],5:[function(require,module,exports){
+},{"./utils/async":6,"./utils/stylesheet":8,"./utils/walker":9}],5:[function(require,module,exports){
 var async = require("./async");
 /** Helper to process recursive chains */
 var Actions = (function () {
@@ -425,22 +425,17 @@ function async(action) {
 exports.async = async;
 //# sourceMappingURL=async.js.map
 },{}],7:[function(require,module,exports){
-//# sourceMappingURL=error.js.map
-},{}],8:[function(require,module,exports){
 /** Throw a custom error message */
-function raise(message, inner, level) {
+function raise(message, inner) {
     if (inner === void 0) { inner = null; }
-    if (level === void 0) { level = 'Fatal'; }
-    throw {
-        name: 'Component Error',
-        message: message,
-        level: level,
-        inner: inner
-    };
+    var error = inner !== null ? new Error(message + " (see error.inner for details)") : new Error(message);
+    error.inner = inner;
+    error.name = 'ComponentError';
+    throw error;
 }
 exports.raise = raise;
 //# sourceMappingURL=errors.js.map
-},{}],9:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
@@ -574,7 +569,7 @@ function replaceStyleSheet(node, css, callback) {
 }
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
-},{}],10:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /** Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
@@ -629,4 +624,4 @@ var Walk = (function () {
 })();
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
-},{}]},{},[1,2,3,4,5,6,7,8,9,10]);
+},{}]},{},[1,2,3,4,5,6,7,8,9]);
