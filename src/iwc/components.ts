@@ -1,6 +1,7 @@
 import cmp = require('./component');
 import actions = require('./utils/action_chain');
 import async = require('./utils/async');
+import errors = require('./utils/errors');
 declare var document;
 
 /** Component implementation bindings */
@@ -66,7 +67,12 @@ export class Components {
         action.items = (root:any):any[] => {
             var rtn:any[] = [];
             for (var i = 0; i < this._factory.length; ++i) {
-                var list = this._factory[i].query(root.node);
+                try {
+                    var list = this._factory[i].query(root.node);
+                }
+                catch(e) {
+                    errors.raise('Failed to query() component root elements on factory', e);
+                }
                 for (var j = 0; j < list.length; ++j) {
                     if (!this._exists(list[j])) {
                         rtn.push({node: list[j], factory: this._factory[i]});
@@ -77,15 +83,30 @@ export class Components {
         };
         action.item = (root:any, loaded:{(root:any):void}) => {
             if ((root.factory) && (root.node)) {
-                var instance = root.factory.factory();
+                try {
+                    var instance = root.factory.factory();
+                }
+                catch(e) {
+                    errors.raise('Failed to create component instance from factory()', e);
+                }
                 instance.root = root.node;
                 instance.data = this._data(this._impl.collectData(root.node));
                 instance.factory = root.factory;
                 this._instances.push(instance);
-                var content = instance.content ? instance.content() : null;
+                try {
+                    var content = instance.content ? instance.content() : null;
+                }
+                catch (e) {
+                    errors.raise('Failed to run component content()', e);
+                }
                 this._impl.injectContent(root.node, content, (root) => {
                     if (instance.init) {
-                        instance.init();
+                        try {
+                            instance.init();
+                        }
+                        catch (e) {
+                            errors.raise('Failed to run component init()', e);
+                        }
                     }
                     loaded({node: root, factory: null});
                 });
@@ -155,12 +176,16 @@ export class Components {
         var instances = [];
         for (var i = 0; i < this._instances.length; ++i) {
             try {
+                var valid = true;
                 if (this._instances[i]['valid']) {
-                    var valid = this._instances[i]['valid']() === true;
+                    try {
+                        valid = this._instances[i]['valid']() === true;
+                    }
+                    catch (e) {
+                        errors.raise('Failed to run component valid()', e);
+                    }
                 }
-                else {
-                    var valid = !this._impl.shouldPrune(this._instances[i].root);
-                }
+                valid = valid ? !this._impl.shouldPrune(this._instances[i].root) : false;
             }
             catch (e) {
                 valid = false;
@@ -171,6 +196,7 @@ export class Components {
                         this._instances[i]['drop']();
                     }
                     catch (e) {
+                        errors.raise('Failed to run component drop()', e);
                     }
                 }
             }
@@ -189,7 +215,12 @@ export class Components {
         } // Support jquery
         for (var i = 0; i < this._instances.length; ++i) {
             if (this._impl.equivRoot(root, this._instances[i].root)) {
-                rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
+                try {
+                    rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
+                }
+                catch(e) {
+                    errors.raise('Failed to run component api()');
+                }
                 break;
             }
         }

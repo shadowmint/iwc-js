@@ -106,6 +106,6 @@ export class Base implements Component {
     }
 
     public valid():any {
-      return null;
+      return true;
     }
 }

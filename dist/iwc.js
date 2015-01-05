@@ -16,7 +16,7 @@ var Base = (function () {
         this.data = null;
     };
     Base.prototype.valid = function () {
-        return null;
+        return true;
     };
     return Base;
 })();
@@ -24,6 +24,7 @@ exports.Base = Base;
 //# sourceMappingURL=component.js.map
 },{}],2:[function(require,module,exports){
 var actions = require('./utils/action_chain');
+var errors = require('./utils/errors');
 /** Component registry */
 var Components = (function () {
     function Components(impl) {
@@ -54,7 +55,12 @@ var Components = (function () {
         action.items = function (root) {
             var rtn = [];
             for (var i = 0; i < _this._factory.length; ++i) {
-                var list = _this._factory[i].query(root.node);
+                try {
+                    var list = _this._factory[i].query(root.node);
+                }
+                catch (e) {
+                    errors.raise('Failed to query() component root elements on factory', e);
+                }
                 for (var j = 0; j < list.length; ++j) {
                     if (!_this._exists(list[j])) {
                         rtn.push({ node: list[j], factory: _this._factory[i] });
@@ -65,15 +71,30 @@ var Components = (function () {
         };
         action.item = function (root, loaded) {
             if ((root.factory) && (root.node)) {
-                var instance = root.factory.factory();
+                try {
+                    var instance = root.factory.factory();
+                }
+                catch (e) {
+                    errors.raise('Failed to create component instance from factory()', e);
+                }
                 instance.root = root.node;
                 instance.data = _this._data(_this._impl.collectData(root.node));
                 instance.factory = root.factory;
                 _this._instances.push(instance);
-                var content = instance.content ? instance.content() : null;
+                try {
+                    var content = instance.content ? instance.content() : null;
+                }
+                catch (e) {
+                    errors.raise('Failed to run component content()', e);
+                }
                 _this._impl.injectContent(root.node, content, function (root) {
                     if (instance.init) {
-                        instance.init();
+                        try {
+                            instance.init();
+                        }
+                        catch (e) {
+                            errors.raise('Failed to run component init()', e);
+                        }
                     }
                     loaded({ node: root, factory: null });
                 });
@@ -138,12 +159,16 @@ var Components = (function () {
         var instances = [];
         for (var i = 0; i < this._instances.length; ++i) {
             try {
+                var valid = true;
                 if (this._instances[i]['valid']) {
-                    var valid = this._instances[i]['valid']() === true;
+                    try {
+                        valid = this._instances[i]['valid']() === true;
+                    }
+                    catch (e) {
+                        errors.raise('Failed to run component valid()', e);
+                    }
                 }
-                else {
-                    var valid = !this._impl.shouldPrune(this._instances[i].root);
-                }
+                valid = valid ? !this._impl.shouldPrune(this._instances[i].root) : false;
             }
             catch (e) {
                 valid = false;
@@ -154,6 +179,7 @@ var Components = (function () {
                         this._instances[i]['drop']();
                     }
                     catch (e) {
+                        errors.raise('Failed to run component drop()', e);
                     }
                 }
             }
@@ -171,7 +197,12 @@ var Components = (function () {
         } // Support jquery
         for (var i = 0; i < this._instances.length; ++i) {
             if (this._impl.equivRoot(root, this._instances[i].root)) {
-                rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
+                try {
+                    rtn = this._instances[i]['api'] ? this._instances[i].api() : this._instances[i];
+                }
+                catch (e) {
+                    errors.raise('Failed to run component api()');
+                }
                 break;
             }
         }
@@ -181,7 +212,7 @@ var Components = (function () {
 })();
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
-},{"./utils/action_chain":5}],3:[function(require,module,exports){
+},{"./utils/action_chain":5,"./utils/errors":8}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -255,13 +286,12 @@ var Native = (function () {
             ss.appendStyleSheet(styles);
         }
     };
+    /** Return all attributes on the node */
     Native.prototype.collectData = function (root) {
         return new walk.Walk(root).walk().attribs;
     };
+    /** Check body for tag natively */
     Native.prototype.shouldPrune = function (root) {
-        console.log("Does body contain node");
-        console.log(root);
-        console.log(document.body.contains(root));
         return !document.body.contains(root);
     };
     /** Insert node as root or replace root with html; attach uid. */
@@ -319,7 +349,7 @@ var Native = (function () {
 })();
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
-},{"./utils/async":6,"./utils/stylesheet":7,"./utils/walker":8}],5:[function(require,module,exports){
+},{"./utils/async":6,"./utils/stylesheet":9,"./utils/walker":10}],5:[function(require,module,exports){
 var async = require("./async");
 /** Helper to process recursive chains */
 var Actions = (function () {
@@ -395,6 +425,22 @@ function async(action) {
 exports.async = async;
 //# sourceMappingURL=async.js.map
 },{}],7:[function(require,module,exports){
+//# sourceMappingURL=error.js.map
+},{}],8:[function(require,module,exports){
+/** Throw a custom error message */
+function raise(message, inner, level) {
+    if (inner === void 0) { inner = null; }
+    if (level === void 0) { level = 'Fatal'; }
+    throw {
+        name: 'Component Error',
+        message: message,
+        level: level,
+        inner: inner
+    };
+}
+exports.raise = raise;
+//# sourceMappingURL=errors.js.map
+},{}],9:[function(require,module,exports){
 // create-stylesheet 0.2.3
 // Andrew Wakeling <andrew.wakeling@gmail.com>
 // create-stylesheet may be freely distributed under the MIT license.
@@ -528,7 +574,7 @@ function replaceStyleSheet(node, css, callback) {
 }
 exports.replaceStyleSheet = replaceStyleSheet;
 //# sourceMappingURL=stylesheet.js.map
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /** Walk through the DOM and touch each node */
 var Walk = (function () {
     function Walk(root) {
@@ -583,4 +629,4 @@ var Walk = (function () {
 })();
 exports.Walk = Walk;
 //# sourceMappingURL=walker.js.map
-},{}]},{},[1,2,3,4,5,6,7,8]);
+},{}]},{},[1,2,3,4,5,6,7,8,9,10]);

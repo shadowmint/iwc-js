@@ -16,14 +16,13 @@ export class Native implements c.ComponentsImpl {
         }
     }
 
+    /** Return all attributes on the node */
     collectData(root:any):any {
         return new walk.Walk(root).walk().attribs;
     }
 
+    /** Check body for tag natively */
     shouldPrune(root:any):boolean {
-        console.log("Does body contain node");
-        console.log(root);
-        console.log(document.body.contains(root));
         return !document.body.contains(root);
     }
 
