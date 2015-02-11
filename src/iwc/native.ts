@@ -27,7 +27,7 @@ export class Native implements c.ComponentsImpl {
     }
 
     /** Insert node as root or replace root with html; attach uid. */
-    injectContent(root:any, content:any, done:{(root:any):void}):void {
+    injectContent(root:any, content:any, factory:any, done:{(root:any):void}):void {
         if (content) {
           if (typeof(content) == "string") {
             try {
@@ -38,11 +38,13 @@ export class Native implements c.ComponentsImpl {
               // when setting innerHTML for some elements, eg. section
               // Consume these errors silently.
             }
-            async.async(() => { done(root); });
+            //async.async(() => {
+              done(root);
+              //});
           }
           else {
-              root.innerHTML = "";
-              async.async(() => {
+              //async.async(() => {
+                root.innerHTML = "";
                 try {
                   root.appendChild(content);
                   done(content);
@@ -50,11 +52,11 @@ export class Native implements c.ComponentsImpl {
                 catch(e) {
                   throw new Error("Invalid node could not be injected into the DOM: " + e);
                 }
-              });
+              //});
           }
         }
         else {
-            async.async(() => { done(root); });
+            done(root);
         }
         if (root.setAttribute) {
             root.setAttribute('data-iwc', this._uid());

@@ -1,7 +1,7 @@
 import cmp = require('./component');
 import actions = require('./utils/action_chain');
-import async = require('./utils/async');
 import errors = require('./utils/errors');
+import async = require('./utils/async');
 declare var document;
 
 /** Component implementation bindings */
@@ -23,7 +23,7 @@ export interface ComponentsImpl {
      * Inject the content into the given root node and return the new root node.
      * This operation is invoked async.
      */
-    injectContent(root:any, content:any, done:{(root:any):void}):void;
+    injectContent(root:any, content:any, factory:any, done:{(root:any):void}):void;
 
     /**
      * Compare two root nodes for equivalence.
@@ -44,17 +44,28 @@ export class Components {
     /** Keep a list of all component instances here */
     private _instances:cmp.Component[] = [];
 
+    /** A temporary node list */
+    private _processed:any[];
+
     constructor(impl:ComponentsImpl) {
         this._impl = impl;
     }
 
     /** Cross browser index of */
-    private _indexOf(needle:any, haystack:any) {
+    private _indexOf(needle:any, haystack:any, cmp:any = null) {
         var index = -1;
         for (var i = 0; i < haystack.length; ++i) {
-            if (haystack[i] == needle) {
-                index = i;
-                break;
+            if (cmp) {
+              if (cmp(haystack[i], needle)) {
+                  index = i;
+                  break;
+              }
+            }
+            else {
+              if (haystack[i] == needle) {
+                  index = i;
+                  break;
+              }
             }
         }
         return index;
@@ -62,26 +73,44 @@ export class Components {
 
     /** Load any component instances */
     public load(root:any = null, done:any = null):void {
+      //console.log("Loading starts..............\n\n");
+      this._processed = [];
+      this._load(root, done);
+    }
+
+    /** Load any component instances */
+    private _load(root:any = null, done:any = null):void {
+        //console.log("Stepped into load");
+        var count = 0;
         var action = new actions.Actions();
+        var cmp = (a, b) => { return this._impl.equivRoot(a.node, b.node); };
         action.push({node: root, factory: null});
         action.items = (root:any):any[] => {
+            //console.log("-------------------------- Looking at node ---------------------------");
+            //console.log(root);
             var rtn:any[] = [];
-            for (var i = 0; i < this._factory.length; ++i) {
-                try {
-                    var list = this._factory[i].query(root.node);
-                }
-                catch(e) {
-                    errors.raise('Failed to query() component root elements on factory', e);
-                }
-                for (var j = 0; j < list.length; ++j) {
-                    if (!this._exists(list[j])) {
-                        rtn.push({node: list[j], factory: this._factory[i]});
-                    }
-                }
+            if (this._indexOf(root, this._processed, cmp) == -1) {
+              this._processed.push(root);
+              for (var i = 0; i < this._factory.length; ++i) {
+                  try {
+                      var list = this._factory[i].query(root.node);
+                  }
+                  catch(e) {
+                      errors.raise('Failed to query() component root elements on factory', e);
+                  }
+                  for (var j = 0; j < list.length; ++j) {
+                      if (!this._exists(list[j])) {
+                          rtn.push({node: list[j], factory: this._factory[i]});
+                          //console.log("Turning root node into component!");
+                          //console.log(this._factory[i]);
+                      }
+                  }
+              }
             }
             return rtn;
         };
         action.item = (root:any, loaded:{(root:any):void}) => {
+            count += 1;
             if ((root.factory) && (root.node)) {
                 try {
                     var instance = root.factory.factory();
@@ -99,7 +128,7 @@ export class Components {
                 catch (e) {
                     errors.raise('Failed to run component content()', e);
                 }
-                this._impl.injectContent(root.node, content, (root) => {
+                this._impl.injectContent(root.node, content, instance, (root) => {
                     if (instance.init) {
                         try {
                             instance.init();
@@ -108,14 +137,23 @@ export class Components {
                             errors.raise('Failed to run component init()', e);
                         }
                     }
-                    loaded({node: root, factory: null});
+                    //console.log("Pushing new child node for query");
+                    //console.log(root);
+                    async.async(() => { loaded({node: root, factory: null}); });
                 });
             }
             else {
                 loaded(null);
             }
         };
-        action.all(done);
+        action.all(() => {
+          if (count == 0) {
+            if (done != null) {
+              done();
+            }
+          }
+          else { async.async(() => { this._load(root, done); })}
+        });
     }
 
     /** Check if the given root already exists on some component */

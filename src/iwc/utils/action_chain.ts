@@ -30,19 +30,19 @@ export class Actions {
      * @param items A callback to take a root node and spit out a set of items.
      * @param item A callback to load a single item and then invoke the callback with a new root node.
      */
-    public process(next:{():void}):void {
+    public process():void {
         if (this.roots.length) {
             var root = this.roots.pop();
             var found = this.items(root);
             if (found.length == 0) {
-                next();
+                this.process();
             }
             else {
                 var waiting = found.length;
                 var maybe_done = () => {
                     waiting -= 1;
                     if (waiting <= 0) {
-                        next();
+                        this.process();
                     }
                 };
                 for (var i = 0; i < found.length; ++i) {
@@ -63,13 +63,6 @@ export class Actions {
     /** Process all root nodes and then invoke the callback */
     public all(complete:{():void}) {
         this.complete = complete;
-        var execute = () => {
-            async.async(() => {
-                this.process(() => {
-                    execute();
-                });
-            });
-        };
-        execute();
+        this.process();
     }
 }

@@ -73,5 +73,5 @@ module.exports = function (grunt) {
     // Tasks
     ext.initConfig(grunt);
     grunt.registerTask('default', ['clean', '_lib']);
-    grunt.registerTask('dev', ['default', '_dev']);
+    grunt.registerTask('server', ['default', '_dev']);
 }

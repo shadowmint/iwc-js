@@ -1,6 +1,16 @@
 import c = require('./components');
 import cmp = require('./component');
 
+// test node type
+class TestNode {
+  value: string;
+  id: number;
+  constructor(value:string) {
+    this.id = Math.floor(Math.random() * 1000);
+    this.value = value;
+  }
+}
+
 // test impl
 class TestImpl implements c.ComponentsImpl {
 
@@ -25,10 +35,11 @@ class TestImpl implements c.ComponentsImpl {
         return this.data;
     }
 
-    injectContent(root:any, content:any, done:{(root:any):void}):void {
+    injectContent(root:any, content:any, component:any, done:{(root:any):void}):void {
         if (content) {
             this.injected += 1;
-            root.value = content;
+            root.value = content.value;
+            root['component'] = component.factory.id;
         }
         else {
           root.value = '';
@@ -37,7 +48,7 @@ class TestImpl implements c.ComponentsImpl {
     }
 
     equivRoot(r1:any, r2:any):boolean {
-        return r1 === r2;
+        return r1.id === r2.id;
     }
 }
 
@@ -45,7 +56,7 @@ class TestImpl implements c.ComponentsImpl {
 class Cmp extends cmp.Base {
 
     is_valid:any = null;
-    inner:string = null;
+    inner:TestNode[] = [];
     impl:TestImpl;
 
     constructor(impl:TestImpl) {
@@ -82,8 +93,11 @@ class Factory implements cmp.Factory {
 
     constructor(impl:TestImpl, stylesheet:any = null, roots:any[] = []) {
         this.impl = impl;
-        this.roots = roots;
         this.stylesheet = stylesheet;
+        this.roots = [];
+        for (var i = 0; i < roots.length; ++i) {
+          this.roots.push(new TestNode(roots[i]));
+        }
     }
 
     public factory():cmp.Component {
@@ -96,12 +110,12 @@ class Factory implements cmp.Factory {
     }
 
     public query(root:any):any[] {
-        if ((root.value != null) && (this.id != null)) {
+        if (root.value) {
             var items = (<string> root.value).split('');
             var rtn = [];
             for (var i = 0; i < items.length; ++i) {
                 if (items[i] == this.id) {
-                    rtn.push({value: items[i]});
+                    rtn.push(new TestNode(null));
                 }
             }
             return rtn;
@@ -125,7 +139,7 @@ function tmp_group() {
     var impl = new TestImpl();
     var components = new c.Components(impl);
     var rtn = { impl: impl, factory: [], components: components };
-    for (var i = 0; i < 10; ++i) {
+    for (var i = 0; i < 5; ++i) {
         rtn.factory.push(new Factory(impl));
         rtn.factory[i].id = i;
         rtn.components.add(rtn.factory[i]);
@@ -169,9 +183,9 @@ export function test_recursive_load(t) {
     i.factory[0].id = '0';
     i.factory[1].id = '1';
     i.factory[2].id = '2';
-    Factory.content_map['0'] = '2';
-    Factory.content_map['2'] = '3';
-    i.components.load({value: "0110"}, () => {
+    Factory.content_map['0'] = new TestNode('2');
+    Factory.content_map['2'] = new TestNode('3');
+    i.components.load(new TestNode("99011099"), () => {
         t.equals(i.impl.instances, 8);
         t.equals(i.impl.inits, 8);
         t.equals(i.impl.injected, 4);

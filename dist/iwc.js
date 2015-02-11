@@ -25,6 +25,7 @@ exports.Base = Base;
 },{}],2:[function(require,module,exports){
 var actions = require('./utils/action_chain');
 var errors = require('./utils/errors');
+var async = require('./utils/async');
 /** Component registry */
 var Components = (function () {
     function Components(impl) {
@@ -35,41 +36,69 @@ var Components = (function () {
         this._impl = impl;
     }
     /** Cross browser index of */
-    Components.prototype._indexOf = function (needle, haystack) {
+    Components.prototype._indexOf = function (needle, haystack, cmp) {
+        if (cmp === void 0) { cmp = null; }
         var index = -1;
         for (var i = 0; i < haystack.length; ++i) {
-            if (haystack[i] == needle) {
-                index = i;
-                break;
+            if (cmp) {
+                if (cmp(haystack[i], needle)) {
+                    index = i;
+                    break;
+                }
+            }
+            else {
+                if (haystack[i] == needle) {
+                    index = i;
+                    break;
+                }
             }
         }
         return index;
     };
     /** Load any component instances */
     Components.prototype.load = function (root, done) {
+        if (root === void 0) { root = null; }
+        if (done === void 0) { done = null; }
+        //console.log("Loading starts..............\n\n");
+        this._processed = [];
+        this._load(root, done);
+    };
+    /** Load any component instances */
+    Components.prototype._load = function (root, done) {
         var _this = this;
         if (root === void 0) { root = null; }
         if (done === void 0) { done = null; }
+        //console.log("Stepped into load");
+        var count = 0;
         var action = new actions.Actions();
+        var cmp = function (a, b) {
+            return _this._impl.equivRoot(a.node, b.node);
+        };
         action.push({ node: root, factory: null });
         action.items = function (root) {
+            //console.log("-------------------------- Looking at node ---------------------------");
+            //console.log(root);
             var rtn = [];
-            for (var i = 0; i < _this._factory.length; ++i) {
-                try {
-                    var list = _this._factory[i].query(root.node);
-                }
-                catch (e) {
-                    errors.raise('Failed to query() component root elements on factory', e);
-                }
-                for (var j = 0; j < list.length; ++j) {
-                    if (!_this._exists(list[j])) {
-                        rtn.push({ node: list[j], factory: _this._factory[i] });
+            if (_this._indexOf(root, _this._processed, cmp) == -1) {
+                _this._processed.push(root);
+                for (var i = 0; i < _this._factory.length; ++i) {
+                    try {
+                        var list = _this._factory[i].query(root.node);
+                    }
+                    catch (e) {
+                        errors.raise('Failed to query() component root elements on factory', e);
+                    }
+                    for (var j = 0; j < list.length; ++j) {
+                        if (!_this._exists(list[j])) {
+                            rtn.push({ node: list[j], factory: _this._factory[i] });
+                        }
                     }
                 }
             }
             return rtn;
         };
         action.item = function (root, loaded) {
+            count += 1;
             if ((root.factory) && (root.node)) {
                 try {
                     var instance = root.factory.factory();
@@ -87,7 +116,7 @@ var Components = (function () {
                 catch (e) {
                     errors.raise('Failed to run component content()', e);
                 }
-                _this._impl.injectContent(root.node, content, function (root) {
+                _this._impl.injectContent(root.node, content, instance, function (root) {
                     if (instance.init) {
                         try {
                             instance.init();
@@ -96,14 +125,29 @@ var Components = (function () {
                             errors.raise('Failed to run component init()', e);
                         }
                     }
-                    loaded({ node: root, factory: null });
+                    //console.log("Pushing new child node for query");
+                    //console.log(root);
+                    async.async(function () {
+                        loaded({ node: root, factory: null });
+                    });
                 });
             }
             else {
                 loaded(null);
             }
         };
-        action.all(done);
+        action.all(function () {
+            if (count == 0) {
+                if (done != null) {
+                    done();
+                }
+            }
+            else {
+                async.async(function () {
+                    _this._load(root, done);
+                });
+            }
+        });
     };
     /** Check if the given root already exists on some component */
     Components.prototype._exists = function (root) {
@@ -212,7 +256,7 @@ var Components = (function () {
 })();
 exports.Components = Components;
 //# sourceMappingURL=components.js.map
-},{"./utils/action_chain":5,"./utils/errors":7}],3:[function(require,module,exports){
+},{"./utils/action_chain":5,"./utils/async":6,"./utils/errors":7}],3:[function(require,module,exports){
 var __extends = this.__extends || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -274,7 +318,6 @@ catch (e) {
 //# sourceMappingURL=iwc.js.map
 },{"./component":1,"./components":2,"./native":4}],4:[function(require,module,exports){
 var ss = require('./utils/stylesheet');
-var async = require('./utils/async');
 var walk = require('./utils/walker');
 /** Native dom bindings for the components object api */
 var Native = (function () {
@@ -295,7 +338,7 @@ var Native = (function () {
         return !document.body.contains(root);
     };
     /** Insert node as root or replace root with html; attach uid. */
-    Native.prototype.injectContent = function (root, content, done) {
+    Native.prototype.injectContent = function (root, content, factory, done) {
         if (content) {
             if (typeof (content) == "string") {
                 try {
@@ -303,27 +346,23 @@ var Native = (function () {
                 }
                 catch (e) {
                 }
-                async.async(function () {
-                    done(root);
-                });
+                //async.async(() => {
+                done(root);
             }
             else {
+                //async.async(() => {
                 root.innerHTML = "";
-                async.async(function () {
-                    try {
-                        root.appendChild(content);
-                        done(content);
-                    }
-                    catch (e) {
-                        throw new Error("Invalid node could not be injected into the DOM: " + e);
-                    }
-                });
+                try {
+                    root.appendChild(content);
+                    done(content);
+                }
+                catch (e) {
+                    throw new Error("Invalid node could not be injected into the DOM: " + e);
+                }
             }
         }
         else {
-            async.async(function () {
-                done(root);
-            });
+            done(root);
         }
         if (root.setAttribute) {
             root.setAttribute('data-iwc', this._uid());
@@ -349,8 +388,7 @@ var Native = (function () {
 })();
 exports.Native = Native;
 //# sourceMappingURL=native.js.map
-},{"./utils/async":6,"./utils/stylesheet":8,"./utils/walker":9}],5:[function(require,module,exports){
-var async = require("./async");
+},{"./utils/stylesheet":8,"./utils/walker":9}],5:[function(require,module,exports){
 /** Helper to process recursive chains */
 var Actions = (function () {
     function Actions() {
@@ -368,20 +406,20 @@ var Actions = (function () {
      * @param items A callback to take a root node and spit out a set of items.
      * @param item A callback to load a single item and then invoke the callback with a new root node.
      */
-    Actions.prototype.process = function (next) {
+    Actions.prototype.process = function () {
         var _this = this;
         if (this.roots.length) {
             var root = this.roots.pop();
             var found = this.items(root);
             if (found.length == 0) {
-                next();
+                this.process();
             }
             else {
                 var waiting = found.length;
                 var maybe_done = function () {
                     waiting -= 1;
                     if (waiting <= 0) {
-                        next();
+                        _this.process();
                     }
                 };
                 for (var i = 0; i < found.length; ++i) {
@@ -400,29 +438,55 @@ var Actions = (function () {
     };
     /** Process all root nodes and then invoke the callback */
     Actions.prototype.all = function (complete) {
-        var _this = this;
         this.complete = complete;
-        var execute = function () {
-            async.async(function () {
-                _this.process(function () {
-                    execute();
-                });
-            });
-        };
-        execute();
+        this.process();
     };
     return Actions;
 })();
 exports.Actions = Actions;
 //# sourceMappingURL=action_chain.js.map
-},{"./async":6}],6:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
+function has_window() {
+    return typeof window != 'undefined';
+}
+/** Request animation polyfill from http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/ */
+function requestAnimationFramePolyfill() {
+    var lastTime = 0;
+    var vendors = ['webkit', 'moz'];
+    for (var x = 0; x < vendors.length && !window['requestAnimationFrame']; ++x) {
+        window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+    }
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function (callback) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function () {
+                callback(currTime + timeToCall);
+            }, timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+    if (!window.cancelAnimationFrame) {
+        window.cancelAnimationFrame = function (id) {
+            clearTimeout(id);
+        };
+    }
+}
 /** Invoke an action async */
 function async(action) {
-    setTimeout(function () {
-        action();
-    }, 1);
+    if (has_window()) {
+        window['requestAnimationFrame'](action);
+    }
+    else {
+        setTimeout(action, 1);
+    }
 }
 exports.async = async;
+// Ensure we have some kind of animation helper
+if (has_window()) {
+    requestAnimationFramePolyfill();
+}
 //# sourceMappingURL=async.js.map
 },{}],7:[function(require,module,exports){
 /** Throw a custom error message */
